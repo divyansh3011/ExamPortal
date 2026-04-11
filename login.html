@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign In — Academic Sanctuary</title>
+  <meta name="description" content="Secure login to the Academic Sanctuary examination portal." />
+  <link rel="stylesheet" href="../css/globals.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <style>
+    body { background: var(--bg); display: flex; min-height: 100vh; }
+
+    /* ─── LEFT PANEL ─── */
+    .auth-left {
+      width: 480px; flex-shrink: 0;
+      background: var(--primary);
+      display: flex; flex-direction: column;
+      justify-content: space-between;
+      padding: var(--space-8);
+      position: relative; overflow: hidden;
+    }
+    .auth-left::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 20% 50%, rgba(74,95,191,0.4) 0%, transparent 60%),
+                  radial-gradient(ellipse at 80% 20%, rgba(110,231,199,0.15) 0%, transparent 50%);
+      pointer-events: none;
+    }
+    .auth-left-logo {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 16px; font-weight: 700; color: #fff;
+      position: relative; z-index: 1;
+    }
+    .auth-left-logo .shield {
+      width: 36px; height: 36px; background: rgba(255,255,255,0.15);
+      border-radius: 10px; display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .auth-left-content { position: relative; z-index: 1; }
+    .auth-left-title {
+      font-size: 42px; font-weight: 900; color: #fff;
+      line-height: 1.1; margin-bottom: var(--space-4);
+      letter-spacing: -0.03em;
+    }
+    .auth-left-sub { font-size: 15px; color: rgba(255,255,255,0.65); line-height: 1.7; }
+    .auth-feature-list { display: flex; flex-direction: column; gap: var(--space-3); margin-top: var(--space-6); }
+    .auth-feature {
+      display: flex; align-items: center; gap: var(--space-3);
+      font-size: 13px; color: rgba(255,255,255,0.75); font-weight: 500;
+    }
+    .auth-feature .check {
+      width: 22px; height: 22px; border-radius: 50%;
+      background: rgba(110,231,199,0.2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; flex-shrink: 0; color: var(--teal);
+    }
+    .auth-left-footer { font-size: 11px; color: rgba(255,255,255,0.35); position: relative; z-index: 1; }
+
+    /* Floating shapes */
+    .auth-blob {
+      position: absolute; border-radius: 50%;
+      background: rgba(255,255,255,0.04);
+      animation: floatUp 4s ease-in-out infinite;
+    }
+    .auth-blob-1 { width: 200px; height: 200px; bottom: -60px; right: -60px; }
+    .auth-blob-2 { width: 120px; height: 120px; top: 10%; left: -40px; animation-delay: 1s; }
+
+    /* ─── RIGHT PANEL ─── */
+    .auth-right {
+      flex: 1; display: flex; align-items: center; justify-content: center;
+      padding: var(--space-8);
+    }
+    .auth-form-container {
+      width: 100%; max-width: 400px;
+      animation: fadeInUp 0.6s var(--ease) both;
+    }
+    .auth-role-tabs {
+      display: flex; background: var(--bg-alt); border-radius: var(--radius-full);
+      padding: 4px; margin-bottom: var(--space-8); gap: 4px;
+    }
+    .auth-role-tab {
+      flex: 1; padding: 10px; border-radius: var(--radius-full);
+      font-size: 13px; font-weight: 600; text-align: center;
+      cursor: pointer; transition: var(--transition);
+      color: var(--text-muted);
+    }
+    .auth-role-tab.active {
+      background: var(--surface); color: var(--primary);
+      box-shadow: var(--shadow-sm);
+    }
+    .auth-greeting { margin-bottom: var(--space-6); }
+    .auth-greeting h1 { font-size: 28px; font-weight: 800; color: var(--primary); margin-bottom: var(--space-2); }
+    .auth-greeting p  { font-size: 14px; color: var(--text-secondary); }
+
+    .auth-form { display: flex; flex-direction: column; gap: var(--space-4); }
+    .input-group { position: relative; }
+    .input-icon {
+      position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+      font-size: 16px; pointer-events: none;
+    }
+    .input-icon-right {
+      position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+      font-size: 16px; cursor: pointer; color: var(--text-muted);
+      transition: color 0.2s;
+    }
+    .input-icon-right:hover { color: var(--primary); }
+    .form-input.has-icon { padding-left: 44px; }
+    .form-input.has-icon-right { padding-right: 44px; }
+
+    .auth-divider {
+      display: flex; align-items: center; gap: var(--space-4); margin: var(--space-2) 0;
+    }
+    .auth-divider::before, .auth-divider::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+    .auth-divider span { font-size: 12px; color: var(--text-faint); font-weight: 500; }
+
+    .auth-footer-text { text-align: center; font-size: 13px; color: var(--text-muted); margin-top: var(--space-4); }
+    .auth-footer-text a { color: var(--accent); font-weight: 600; }
+
+    .auth-terms { font-size: 11px; color: var(--text-faint); text-align: center; margin-top: var(--space-4); line-height: 1.6; }
+    .auth-terms a { color: var(--text-muted); text-decoration: underline; text-underline-offset: 2px; }
+
+    /* OTP box */
+    .otp-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: var(--space-2); }
+    .otp-input {
+      width: 100%; aspect-ratio: 1;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      text-align: center; font-size: 20px; font-weight: 700;
+      color: var(--primary); background: var(--surface);
+      transition: var(--transition-fast);
+    }
+    .otp-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); outline: none; }
+    .otp-group { display: none; }
+    .otp-group.show { display: flex; flex-direction: column; gap: var(--space-4); }
+
+    /* Error/success messages */
+    .auth-message {
+      padding: 12px 16px; border-radius: var(--radius);
+      font-size: 13px; font-weight: 500;
+      display: none;
+    }
+    .auth-message.error   { background: var(--danger-soft); color: var(--danger); display: flex; align-items: center; gap: 8px; }
+    .auth-message.success { background: var(--success-soft); color: var(--success); display: flex; align-items: center; gap: 8px; }
+  </style>
+</head>
+<body>
+
+<!-- ─── LEFT PANEL ─── -->
+<div class="auth-left">
+  <div class="auth-blob auth-blob-1"></div>
+  <div class="auth-blob auth-blob-2"></div>
+
+  <div class="auth-left-logo">
+    <div class="shield">🛡️</div>
+    Academic Sanctuary
+  </div>
+
+  <div class="auth-left-content">
+    <h2 class="auth-left-title">Secure &amp;<br/>Intelligent<br/>Assessment</h2>
+    <p class="auth-left-sub">Powering examinations for institutions that demand excellence and integrity.</p>
+    <ul class="auth-feature-list">
+      <li class="auth-feature"><div class="check">✓</div> AI-Powered Proctoring System</li>
+      <li class="auth-feature"><div class="check">✓</div> Real-Time Cheating Detection</li>
+      <li class="auth-feature"><div class="check">✓</div> Biometric Identity Verification</li>
+      <li class="auth-feature"><div class="check">✓</div> End-to-End Encrypted Sessions</li>
+      <li class="auth-feature"><div class="check">✓</div> Instant Performance Analytics</li>
+    </ul>
+  </div>
+
+  <div class="auth-left-footer">
+    AES-256 GCM Encrypted · GDPR Compliant · ISO 27001 Certified
+  </div>
+</div>
+
+<!-- ─── RIGHT PANEL ─── -->
+<div class="auth-right">
+  <div class="auth-form-container">
+
+    <!-- Role Tabs -->
+    <div class="auth-role-tabs" id="role-tabs">
+      <div class="auth-role-tab active" id="tab-student" onclick="switchRole('student')">🎓 Student</div>
+      <div class="auth-role-tab" id="tab-admin" onclick="switchRole('admin')">🛡️ Examiner</div>
+    </div>
+
+    <div class="auth-greeting">
+      <h1 id="auth-title">Welcome Back</h1>
+      <p id="auth-subtitle">Sign in to your student portal</p>
+    </div>
+
+    <!-- Message Box -->
+    <div class="auth-message" id="auth-message"></div>
+
+    <!-- Main Login Form -->
+    <form class="auth-form" id="auth-form" onsubmit="handleLogin(event)">
+
+      <div class="form-group">
+        <label class="form-label" for="roll-input">Roll Number / Email</label>
+        <div class="input-group">
+          <span class="input-icon">👤</span>
+          <input id="roll-input" class="form-input has-icon" type="text" placeholder="e.g. STU-88294 or admin@uni.edu" required autocomplete="username" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="pass-input">Password</label>
+        <div class="input-group">
+          <span class="input-icon">🔒</span>
+          <input id="pass-input" class="form-input has-icon has-icon-right" type="password" placeholder="Enter your password" required autocomplete="current-password" />
+          <span class="input-icon-right" onclick="togglePassword()" id="pass-eye">👁️</span>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end;">
+        <a href="#" style="font-size: 12px; color: var(--accent); font-weight: 500;">Forgot password?</a>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-lg w-full" id="login-btn" style="justify-content: center;">
+        Sign In Securely
+      </button>
+    </form>
+
+    <!-- OTP Verification (shown after login if needed) -->
+    <div class="otp-group" id="otp-group">
+      <p style="font-size: 14px; color: var(--text-secondary); text-align: center;">Enter the 6-digit code sent to your institution email.</p>
+      <div class="otp-grid">
+        <input class="otp-input" type="text" maxlength="1" data-idx="0" />
+        <input class="otp-input" type="text" maxlength="1" data-idx="1" />
+        <input class="otp-input" type="text" maxlength="1" data-idx="2" />
+        <input class="otp-input" type="text" maxlength="1" data-idx="3" />
+        <input class="otp-input" type="text" maxlength="1" data-idx="4" />
+        <input class="otp-input" type="text" maxlength="1" data-idx="5" />
+      </div>
+      <button class="btn btn-primary w-full" onclick="verifyOTP()" style="justify-content: center;">Verify &amp; Continue</button>
+      <p style="font-size: 12px; text-align: center; color: var(--text-muted);">Didn't receive? <a href="#" style="color:var(--accent);">Resend Code</a></p>
+    </div>
+
+    <div class="auth-divider"><span>or</span></div>
+
+    <a href="index.html" class="btn btn-ghost w-full" style="justify-content: center;">← Back to Gateway</a>
+
+    <div class="auth-terms">
+      By signing in, you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.<br/>
+      All sessions are monitored for academic integrity compliance.
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+  // Determine role from URL param
+  let currentRole = new URLSearchParams(location.search).get('role') || 'student';
+  switchRole(currentRole);
+
+  function switchRole(role) {
+    currentRole = role;
+    document.getElementById('tab-student').classList.toggle('active', role === 'student');
+    document.getElementById('tab-admin').classList.toggle('active', role === 'admin');
+    document.getElementById('auth-title').textContent   = role === 'student' ? 'Welcome Back' : 'Examiner Login';
+    document.getElementById('auth-subtitle').textContent = role === 'student'
+      ? 'Sign in to your student portal'
+      : 'Access the examiner console';
+    document.getElementById('roll-input').placeholder    = role === 'student'
+      ? 'e.g. STU-88294'
+      : 'admin@institution.edu';
+  }
+
+  function togglePassword() {
+    const input = document.getElementById('pass-input');
+    const eye   = document.getElementById('pass-eye');
+    if (input.type === 'password') { input.type = 'text';     eye.textContent = '🙈'; }
+    else                           { input.type = 'password'; eye.textContent = '👁️'; }
+  }
+
+  function showMessage(msg, type) {
+    const el = document.getElementById('auth-message');
+    el.className = `auth-message ${type}`;
+    el.innerHTML = (type === 'error' ? '⚠️ ' : '✓ ') + msg;
+  }
+
+  async function handleLogin(e) {
+    e.preventDefault();
+    const btn = document.getElementById('login-btn');
+    btn.classList.add('loading');
+    btn.textContent = '';
+
+    const id   = document.getElementById('roll-input').value.trim();
+    const pass = document.getElementById('pass-input').value;
+
+    // Demo auth — accept any credentials
+    await new Promise(r => setTimeout(r, 1200));
+
+    btn.classList.remove('loading');
+    btn.textContent = 'Sign In Securely';
+
+    if (!id || !pass) {
+      showMessage('Please fill in all fields.', 'error');
+      return;
+    }
+
+    // Store session
+    localStorage.setItem('as_user', JSON.stringify({
+      id, role: currentRole,
+      name: currentRole === 'student' ? 'Alexander' : 'Prof. Singh',
+      rollNo: id.toUpperCase()
+    }));
+
+    showMessage('Authentication successful! Redirecting...', 'success');
+    setTimeout(() => {
+      if (currentRole === 'student') window.location.href = 'student/dashboard.html';
+      else                           window.location.href = 'admin/dashboard.html';
+    }, 800);
+  }
+
+  // OTP auto-advance
+  document.querySelectorAll('.otp-input').forEach((input, i, inputs) => {
+    input.addEventListener('input', () => {
+      if (input.value && i < inputs.length - 1) inputs[i + 1].focus();
+    });
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Backspace' && !input.value && i > 0) inputs[i - 1].focus();
+    });
+  });
+
+  function verifyOTP() {
+    const code = [...document.querySelectorAll('.otp-input')].map(i => i.value).join('');
+    if (code.length < 6) { showToast('Enter complete 6-digit code', 'danger'); return; }
+    showToast('OTP Verified!', 'success');
+    setTimeout(() => { window.location.href = currentRole === 'student' ? 'student/dashboard.html' : 'admin/dashboard.html'; }, 800);
+  }
+
+  function showToast(msg, type = '') {
+    const c = document.getElementById('toast-container');
+    const t = document.createElement('div');
+    t.className = `toast toast-${type}`;
+    t.textContent = msg;
+    c.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+  }
+</script>
+</body>
+</html>

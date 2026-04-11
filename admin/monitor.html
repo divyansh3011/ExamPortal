@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Live Monitor — Academic Sanctuary</title>
+  <link rel="stylesheet" href="../css/globals.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <style>
+    body { background: var(--dark-bg); color: var(--dark-text); min-height: 100vh; display: flex; flex-direction: column; overflow: hidden; height: 100vh; }
+    .monitor-header { height: 56px; background: var(--dark-surface); border-bottom: 1px solid var(--dark-border); display: flex; align-items: center; justify-content: space-between; padding: 0 var(--space-6); flex-shrink: 0; }
+    .mh-left { display: flex; align-items: center; gap: var(--space-4); }
+    .mh-logo  { font-size: 14px; font-weight: 700; color: var(--dark-text); display: flex; align-items: center; gap: 8px; }
+    .mh-exam  { font-size: 13px; color: var(--dark-muted); border-left: 1px solid var(--dark-border); padding-left: var(--space-4); }
+    .mh-right { display: flex; align-items: center; gap: var(--space-4); }
+    .mh-stat  { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--dark-muted); }
+    .mh-stat .val { color: var(--dark-text); font-weight: 700; }
+    .mh-stat .danger { color: var(--danger); }
+
+    .monitor-body { display: flex; flex: 1; overflow: hidden; }
+
+    /* Filter sidebar */
+    .filter-sidebar { width: 220px; background: var(--dark-surface); border-right: 1px solid var(--dark-border); padding: var(--space-5); flex-shrink: 0; display: flex; flex-direction: column; gap: var(--space-5); overflow-y: auto; }
+    .fs-label { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dark-muted); margin-bottom: var(--space-3); }
+    .filter-item { display: flex; align-items: center; gap: var(--space-3); cursor: pointer; padding: 8px var(--space-3); border-radius: var(--radius-sm); transition: var(--transition-fast); color: var(--dark-muted); font-size: 13px; }
+    .filter-item:hover  { background: rgba(255,255,255,0.05); color: var(--dark-text); }
+    .filter-item.active { background: rgba(74,95,191,0.2); color: var(--accent-light); font-weight: 600; }
+    .filter-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .search-box { background: rgba(255,255,255,0.05); border: 1px solid var(--dark-border); border-radius: var(--radius-sm); padding: 8px 12px; color: var(--dark-text); font-size: 13px; width: 100%; }
+    .search-box:focus { outline: none; border-color: var(--accent); }
+    .search-box::placeholder { color: var(--dark-muted); }
+
+    /* Main grid */
+    .monitor-main { flex: 1; overflow-y: auto; padding: var(--space-5); }
+    .grid-controls { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-4); }
+    .gc-left { display: flex; align-items: center; gap: var(--space-4); font-size: 13px; color: var(--dark-muted); }
+    .gc-right { display: flex; gap: var(--space-2); }
+    .grid-size-btn { width: 32px; height: 32px; border-radius: var(--radius-sm); border: 1px solid var(--dark-border); background: transparent; color: var(--dark-muted); cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; transition: var(--transition-fast); }
+    .grid-size-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+    .students-grid { display: grid; gap: var(--space-3); }
+    .students-grid.grid-4 { grid-template-columns: repeat(4, 1fr); }
+    .students-grid.grid-6 { grid-template-columns: repeat(6, 1fr); }
+    .students-grid.grid-2 { grid-template-columns: repeat(2, 1fr); }
+
+    /* Student card */
+    .s-card { background: var(--dark-surface); border: 1px solid var(--dark-border); border-radius: var(--radius-md); overflow: hidden; cursor: pointer; transition: var(--transition); }
+    .s-card:hover { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+    .s-card.flagged { border-color: var(--danger); box-shadow: 0 0 10px rgba(239,68,68,0.2); }
+    .s-card.warning { border-color: var(--warning); }
+    .s-feed { aspect-ratio: 4/3; background: var(--dark-bg); position: relative; overflow: hidden; }
+    .s-feed-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 32px; color: var(--dark-muted); background: linear-gradient(135deg, var(--dark-bg), var(--dark-surface-2)); }
+    .s-feed-live { position: absolute; top: 6px; left: 6px; }
+    .s-feed-flag { position: absolute; top: 6px; right: 6px; font-size: 16px; }
+    .s-feed-q { position: absolute; bottom: 6px; left: 6px; background: rgba(0,0,0,0.7); color: #fff; font-size: 10px; font-family: var(--font-mono); padding: 2px 6px; border-radius: 3px; }
+    .s-info { padding: 8px 10px; }
+    .s-name { font-size: 12px; font-weight: 600; color: var(--dark-text); }
+    .s-roll { font-size: 10px; color: var(--dark-muted); }
+    .s-stats-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+    .s-stat-chip { font-size: 10px; padding: 2px 6px; border-radius: 3px; font-weight: 600; }
+    .s-stat-chip.ok   { background: rgba(16,185,129,0.15); color: var(--code-green); }
+    .s-stat-chip.warn { background: rgba(245,158,11,0.15); color: var(--code-orange); }
+    .s-stat-chip.bad  { background: rgba(239,68,68,0.15); color: var(--code-red); }
+
+    /* Detail panel */
+    .detail-panel { width: 320px; background: var(--dark-surface); border-left: 1px solid var(--dark-border); padding: var(--space-5); overflow-y: auto; flex-shrink: 0; display: none; flex-direction: column; gap: var(--space-4); }
+    .detail-panel.open { display: flex; }
+    .dp-header { display: flex; align-items: center; justify-content: space-between; }
+    .dp-title { font-size: 14px; font-weight: 700; color: var(--dark-text); }
+    .dp-close { font-size: 18px; color: var(--dark-muted); cursor: pointer; }
+    .dp-close:hover { color: var(--dark-text); }
+    .dp-cam  { border-radius: var(--radius-md); overflow: hidden; aspect-ratio: 4/3; background: var(--dark-bg); display: flex; align-items: center; justify-content: center; font-size: 48px; color: var(--dark-muted); }
+    .dp-stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+    .dp-stat { background: rgba(255,255,255,0.04); border-radius: var(--radius-sm); padding: 10px 12px; }
+    .dp-stat-val { font-size: 20px; font-weight: 800; color: var(--dark-text); }
+    .dp-stat-lbl { font-size: 10px; color: var(--dark-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2px; }
+    .dp-incident-list { display: flex; flex-direction: column; gap: var(--space-2); }
+    .dp-incident { padding: 8px 10px; border-radius: var(--radius-sm); font-size: 12px; display: flex; align-items: center; gap: 8px; }
+    .dp-incident.danger  { background: rgba(239,68,68,0.1); color: var(--code-red); }
+    .dp-incident.warning { background: rgba(245,158,11,0.1); color: var(--code-orange); }
+    .dp-incident.info    { background: rgba(79,129,255,0.1); color: var(--code-blue); }
+    .dp-actions { display: flex; flex-direction: column; gap: var(--space-2); }
+    .dp-action-btn { padding: 10px 14px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: var(--transition-fast); display: flex; align-items: center; gap: 8px; }
+    .dp-action-btn.warn { background: rgba(245,158,11,0.15); color: var(--code-orange); }
+    .dp-action-btn.bad  { background: rgba(239,68,68,0.15); color: var(--code-red); }
+    .dp-action-btn.ok   { background: rgba(16,185,129,0.15); color: var(--code-green); }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="monitor-header">
+  <div class="mh-left">
+    <div class="mh-logo">🛡️ Sanctuary Monitor</div>
+    <div class="mh-exam">Neural Architecture Foundations <span style="margin-left:8px; font-size:11px;" class="live-badge">LIVE</span></div>
+  </div>
+  <div class="mh-right">
+    <div class="mh-stat"><span>Active:</span><span class="val" id="active-count">142</span></div>
+    <div class="mh-stat"><span>Completed:</span><span class="val">14</span></div>
+    <div class="mh-stat"><span>Flags:</span><span class="val danger" id="flag-count">3</span></div>
+    <div class="mh-stat">Time Left: <span class="val" id="time-left">1:42:58</span></div>
+    <a href="dashboard.html" class="btn btn-ghost btn-sm" style="border-color:rgba(255,255,255,0.15); color:rgba(255,255,255,0.6);">← Dashboard</a>
+  </div>
+</header>
+
+<div class="monitor-body">
+
+  <!-- FILTER SIDEBAR -->
+  <div class="filter-sidebar">
+    <div>
+      <div class="fs-label">Search</div>
+      <input class="search-box" placeholder="🔍 Roll No / Name..." oninput="filterStudents(this.value)" />
+    </div>
+    <div>
+      <div class="fs-label">Filter Status</div>
+      <div class="filter-item active" onclick="setFilter('all',  this)"><div class="filter-dot" style="background:var(--teal);"></div> All Students</div>
+      <div class="filter-item"       onclick="setFilter('flagged', this)"><div class="filter-dot" style="background:var(--danger);"></div> Flagged Only</div>
+      <div class="filter-item"       onclick="setFilter('warning', this)"><div class="filter-dot" style="background:var(--warning);"></div> Warnings</div>
+      <div class="filter-item"       onclick="setFilter('clean',   this)"><div class="filter-dot" style="background:var(--success);"></div> Clean Status</div>
+    </div>
+    <div>
+      <div class="fs-label">Proctor Stats</div>
+      <div style="display:flex; flex-direction:column; gap: var(--space-2);">
+        <div class="dp-stat"><div class="dp-stat-val" style="font-size:16px; color: var(--code-red);" id="total-flags">3</div><div class="dp-stat-lbl">Total Flags</div></div>
+        <div class="dp-stat"><div class="dp-stat-val" style="font-size:16px; color: var(--code-orange);" id="tab-switches">8</div><div class="dp-stat-lbl">Tab Switches</div></div>
+        <div class="dp-stat"><div class="dp-stat-val" style="font-size:16px; color: var(--code-green);" id="clean-count">128</div><div class="dp-stat-lbl">Clean Status</div></div>
+      </div>
+    </div>
+    <div style="margin-top:auto;">
+      <button class="btn btn-danger w-full" style="justify-content:center; font-size:13px;" onclick="broadcastMessage()">📢 Broadcast Message</button>
+      <button class="btn btn-ghost w-full" style="margin-top:var(--space-2); justify-content:center; font-size:13px; border-color:rgba(255,255,255,0.15); color:rgba(255,255,255,0.6);" onclick="exportReport()">⬇ Export Report</button>
+    </div>
+  </div>
+
+  <!-- MAIN GRID -->
+  <div class="monitor-main">
+    <div class="grid-controls">
+      <div class="gc-left">
+        <span id="display-count">Showing 142 students</span>
+        <span>•</span>
+        <span id="filter-label">All</span>
+      </div>
+      <div class="gc-right">
+        <button class="grid-size-btn" onclick="setGrid(2)" title="2 columns">⊟</button>
+        <button class="grid-size-btn active" id="grid-btn-4" onclick="setGrid(4)" title="4 columns">⊞</button>
+        <button class="grid-size-btn" id="grid-btn-6" onclick="setGrid(6)" title="6 columns">⊟⊟</button>
+      </div>
+    </div>
+    <div class="students-grid grid-4" id="students-grid"></div>
+  </div>
+
+  <!-- DETAIL PANEL -->
+  <div class="detail-panel" id="detail-panel">
+    <div class="dp-header">
+      <div class="dp-title" id="dp-student-name">Student Detail</div>
+      <div class="dp-close" onclick="closeDetail()">✕</div>
+    </div>
+    <div>
+      <div style="font-size:11px; color:var(--dark-muted); margin-bottom:var(--space-2);">LIVE WEBCAM FEED</div>
+      <div class="dp-cam" id="dp-cam">👤</div>
+    </div>
+    <div class="dp-stat-grid" id="dp-stats"></div>
+    <div>
+      <div style="font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--dark-muted); margin-bottom:var(--space-3);">Incidents</div>
+      <div class="dp-incident-list" id="dp-incidents"></div>
+    </div>
+    <div class="dp-actions">
+      <button class="dp-action-btn warn" onclick="sendWarning()">⚠️ Send Warning to Student</button>
+      <button class="dp-action-btn bad"  onclick="terminateExam()">🚫 Terminate Exam</button>
+      <button class="dp-action-btn ok"   onclick="flagReviewed()">✓ Mark as Reviewed</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+// Generate mock student data
+const NAMES = ['Alexander Chen','Priya Sharma','Chen Wei','Sofia Martinez','James Kim','Ananya Patel','Ravi Singh','Liu Yang','Carlos Rivera','Mei Tanaka','Dev Patel','Sara Johnson','Tom Wilson','Aisha Hassan','Max Mueller','Yuki Nakamura','Omar Al-Rashid','Fatima Khan','Lucas Oliveira','Zara Ahmed'];
+const STATUS = ['clean','clean','clean','clean','clean','warning','clean','clean','clean','flagged','clean','clean','clean','warning','clean','clean','flagged','clean','clean','clean'];
+
+const STUDENTS = NAMES.map((name, i) => ({
+  id: `STU-${(88000 + i).toString()}`,
+  name,
+  status: STATUS[i % STATUS.length],
+  q: Math.floor(Math.random() * 10) + 1,
+  score: Math.floor(Math.random() * 60 + 40),
+  tabSwitches: STATUS[i % STATUS.length] === 'flagged' ? Math.floor(Math.random() * 3) + 1 : 0,
+  gaze: STATUS[i % STATUS.length] === 'warning' ? 'Away' : 'Active',
+  timeLeft: `${Math.floor(Math.random() * 90) + 30}m`,
+  incidents: STATUS[i % STATUS.length] === 'flagged' ? [
+    { type: 'danger',  text: '3 tab switches detected' },
+    { type: 'warning', text: 'Gaze away 4 times' }
+  ] : STATUS[i % STATUS.length] === 'warning' ? [
+    { type: 'warning', text: 'Gaze away from screen' }
+  ] : []
+}));
+
+let displayedStudents = [...STUDENTS];
+let selectedStudent   = null;
+let currentFilter     = 'all';
+
+function renderGrid() {
+  const grid = document.getElementById('students-grid');
+  grid.innerHTML = displayedStudents.map((s, i) => `
+    <div class="s-card ${s.status}" onclick="selectStudent(${STUDENTS.indexOf(s)})">
+      <div class="s-feed">
+        <div class="s-feed-placeholder">${s.status === 'flagged' ? '⚠️' : '👤'}</div>
+        <div class="s-feed-live"><span class="live-badge" style="font-size:9px; padding:2px 7px;">LIVE</span></div>
+        ${s.incidents.length > 0 ? `<div class="s-feed-flag">🚩</div>` : ''}
+        <div class="s-feed-q" title="Current question">Q${s.q}</div>
+      </div>
+      <div class="s-info">
+        <div class="s-name">${s.name}</div>
+        <div class="s-roll">${s.id}</div>
+        <div class="s-stats-row">
+          <span class="s-stat-chip ${s.gaze === 'Active' ? 'ok' : 'warn'}">👁 ${s.gaze}</span>
+          ${s.tabSwitches > 0 ? `<span class="s-stat-chip bad">⚠ ${s.tabSwitches} switches</span>` : `<span class="s-stat-chip ok">✓ Clean</span>`}
+        </div>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('display-count').textContent = `Showing ${displayedStudents.length} students`;
+}
+
+function selectStudent(idx) {
+  selectedStudent = STUDENTS[idx];
+  const panel = document.getElementById('detail-panel');
+  panel.classList.add('open');
+  document.getElementById('dp-student-name').textContent = selectedStudent.name;
+  document.getElementById('dp-cam').textContent = '👤';
+  document.getElementById('dp-stats').innerHTML = [
+    { val: `Q${selectedStudent.q}/10`, lbl: 'Progress' },
+    { val: selectedStudent.gaze, lbl: 'Gaze', color: selectedStudent.gaze === 'Active' ? 'var(--code-green)' : 'var(--code-orange)' },
+    { val: selectedStudent.tabSwitches, lbl: 'Tab Switches', color: selectedStudent.tabSwitches > 0 ? 'var(--code-red)' : 'var(--code-green)' },
+    { val: selectedStudent.timeLeft, lbl: 'Time Left' }
+  ].map(s => `<div class="dp-stat"><div class="dp-stat-val" style="${s.color ? 'color:'+s.color : ''}">${s.val}</div><div class="dp-stat-lbl">${s.lbl}</div></div>`).join('');
+
+  document.getElementById('dp-incidents').innerHTML = selectedStudent.incidents.length
+    ? selectedStudent.incidents.map(inc => `<div class="dp-incident ${inc.type}">${inc.type === 'danger' ? '🚨' : '⚠️'} ${inc.text}</div>`).join('')
+    : '<div style="font-size:12px; color:var(--dark-muted);">✓ No incidents recorded</div>';
+}
+
+function closeDetail() {
+  document.getElementById('detail-panel').classList.remove('open');
+  selectedStudent = null;
+}
+
+function filterStudents(search) {
+  const q = search.toLowerCase();
+  displayedStudents = STUDENTS.filter(s =>
+    (currentFilter === 'all' || s.status === currentFilter) &&
+    (s.name.toLowerCase().includes(q) || s.id.includes(q))
+  );
+  renderGrid();
+}
+
+function setFilter(status, el) {
+  currentFilter = status;
+  document.querySelectorAll('.filter-item').forEach(f => f.classList.remove('active'));
+  el.classList.add('active');
+  displayedStudents = status === 'all' ? [...STUDENTS] : STUDENTS.filter(s => s.status === status);
+  document.getElementById('filter-label').textContent = status.charAt(0).toUpperCase() + status.slice(1);
+  renderGrid();
+}
+
+function setGrid(n) {
+  const grid = document.getElementById('students-grid');
+  grid.className = `students-grid grid-${n}`;
+  document.querySelectorAll('.grid-size-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+// Actions
+function sendWarning()   { showToast(`⚠️ Warning sent to ${selectedStudent?.name || 'student'}`, 'warning'); }
+function terminateExam() { showToast(`🚫 Exam terminated for ${selectedStudent?.name || 'student'}`, 'danger'); closeDetail(); }
+function flagReviewed()  { showToast('✓ Marked as reviewed', 'success'); closeDetail(); }
+function broadcastMessage() { showToast('📢 Broadcast message sent to all students', 'success'); }
+function exportReport()  { showToast('⬇ Exporting proctor report...', 'success'); }
+
+// Live timer
+let seconds = 6178;
+setInterval(() => {
+  seconds = Math.max(0, seconds - 1);
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  document.getElementById('time-left').textContent = `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}, 1000);
+
+// Simulate live fluctuations
+setInterval(() => {
+  const active = 142 + Math.floor(Math.random() * 4 - 2);
+  document.getElementById('active-count').textContent = active;
+}, 5000);
+
+function showToast(msg, type='') {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = `toast toast-${type}`;
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+
+renderGrid();
+showToast('Live monitor initialized — 142 students active', 'success');
+</script>
+</body>
+</html>

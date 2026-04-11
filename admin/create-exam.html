@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Create Exam — Academic Sanctuary</title>
+  <link rel="stylesheet" href="../css/globals.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <style>
+    body { background: var(--bg); display: flex; min-height: 100vh; }
+    /* Same sidebar */
+    .sidebar { width: 240px; flex-shrink: 0; background: var(--primary); color: #fff; display: flex; flex-direction: column; min-height: 100vh; position: fixed; top: 0; left: 0; bottom: 0; }
+    .sb-brand { padding: var(--space-6); border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .sb-brand-name { font-size: 15px; font-weight: 700; color: #fff; }
+    .sb-brand-sub  { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 2px; }
+    .sb-nav { flex: 1; padding: var(--space-4) var(--space-3); }
+    .sb-item { display: flex; align-items: center; gap: var(--space-3); padding: 10px var(--space-3); border-radius: var(--radius); color: rgba(255,255,255,0.65); font-size: 13px; font-weight: 500; cursor: pointer; transition: var(--transition-fast); text-decoration: none; margin-bottom: 2px; }
+    .sb-item:hover { background: rgba(255,255,255,0.1); color: #fff; }
+    .sb-item.active { background: rgba(255,255,255,0.15); color: #fff; font-weight: 600; }
+    .sb-item .icon { width: 20px; text-align: center; }
+
+    .main { margin-left: 240px; flex: 1; display: flex; flex-direction: column; }
+    .topnav { height: 60px; background: var(--surface); border-bottom: 1px solid var(--border-light); display: flex; align-items: center; justify-content: space-between; padding: 0 var(--space-8); position: sticky; top: 0; z-index: 10; }
+    .tn-left { display: flex; align-items: center; gap: var(--space-3); }
+    .tn-step { font-size: 14px; font-weight: 500; color: var(--text-muted); }
+    .tn-step.active { color: var(--primary); font-weight: 700; }
+    .tn-divider { color: var(--border); font-size: 18px; }
+    .tn-right { display: flex; gap: var(--space-3); align-items: center; }
+    .autosave-note { font-size: 12px; color: var(--text-faint); }
+
+    /* ─── WIZARD LAYOUT ─── */
+    .wizard-layout { display: grid; grid-template-columns: 200px 1fr; flex: 1; }
+
+    /* Step panel */
+    .step-panel { background: var(--surface); border-right: 1px solid var(--border-light); padding: var(--space-6); }
+    .sp-step { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) 0; cursor: pointer; }
+    .sp-num { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; transition: var(--transition-fast); }
+    .sp-num.done   { background: var(--primary); color: #fff; }
+    .sp-num.active { background: var(--accent); color: #fff; }
+    .sp-num.pending { background: var(--bg-alt); color: var(--text-muted); }
+    .sp-label { font-size: 13px; font-weight: 500; color: var(--text-muted); }
+    .sp-step.active .sp-label { color: var(--primary); font-weight: 700; }
+    .sp-connector { width: 2px; height: 20px; background: var(--border); margin-left: 14px; }
+    .sp-connector.done { background: var(--primary); }
+
+    /* Tip box */
+    .tip-box { background: var(--accent-soft); border-radius: var(--radius); padding: var(--space-4); margin-top: var(--space-6); }
+    .tip-label { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin-bottom: var(--space-2); display: flex; align-items: center; gap: 4px; }
+    .tip-text  { font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
+
+    /* Preview mini */
+    .preview-mini { background: var(--primary); border-radius: var(--radius); overflow: hidden; margin-top: var(--space-4); }
+    .pm-top { display: flex; align-items: center; gap: 6px; padding: 8px 10px; }
+    .pm-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .pm-body { background: #111; padding: 10px; }
+    .pm-title { color: #fff; font-size: 11px; font-weight: 700; }
+    .pm-sub   { color: rgba(255,255,255,0.5); font-size: 10px; }
+
+    /* Main content */
+    .wizard-content { overflow-y: auto; }
+    .wc-section { padding: var(--space-8); border-bottom: 1px solid var(--border-light); }
+    .section-header { margin-bottom: var(--space-6); }
+    .section-heading { font-size: 22px; font-weight: 800; color: var(--primary); margin-bottom: var(--space-2); }
+    .section-sub     { font-size: 14px; color: var(--text-secondary); }
+
+    .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-5); }
+    .form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--space-5); }
+
+    /* Question items */
+    .q-item { background: var(--surface); border-radius: var(--radius-lg); border: 1px solid var(--border-light); margin-bottom: var(--space-4); overflow: hidden; box-shadow: var(--shadow-xs); }
+    .q-item-header { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-4) var(--space-5); border-bottom: 1px solid var(--border-light); background: var(--bg); }
+    .q-item-body   { padding: var(--space-5); }
+    .q-drag { font-size: 16px; color: var(--text-faint); cursor: grab; }
+    .q-type-badge { }
+    .q-num { font-size: 12px; font-weight: 700; color: var(--text-muted); }
+    .q-delete { margin-left: auto; color: var(--text-faint); cursor: pointer; transition: color 0.2s; font-size: 16px; }
+    .q-delete:hover { color: var(--danger); }
+
+    /* MCQ option inputs */
+    .option-row { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-2); }
+    .option-radio { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--border); flex-shrink: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .option-radio.correct { background: var(--success); border-color: var(--success); }
+    .option-radio.correct::after { content: ''; width: 6px; height: 6px; background: #fff; border-radius: 50%; }
+    .option-input { flex: 1; }
+    .add-option-btn { font-size: 13px; color: var(--accent); font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px; background: none; border: none; padding: var(--space-2) 0; }
+    .add-option-btn:hover { color: var(--primary); }
+
+    /* Code starter */
+    .code-starter { background: var(--dark-bg); border-radius: var(--radius-md); padding: var(--space-4); font-family: var(--font-mono); font-size: 12px; color: var(--dark-text); border: 1px solid var(--dark-border); min-height: 100px; resize: vertical; width: 100%; }
+    .code-starter:focus { outline: none; border-color: var(--accent); }
+
+    /* Test case row */
+    .tc-row { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); background: var(--bg); border-radius: var(--radius-sm); margin-bottom: var(--space-2); border: 1px solid var(--border-light); }
+    .tc-label { font-size: 11px; font-weight: 700; color: var(--accent); background: var(--accent-soft); padding: 2px 8px; border-radius: var(--radius-full); flex-shrink: 0; }
+    .tc-input  { flex: 1; font-family: var(--font-mono); font-size: 12px; }
+    .tc-output { width: 80px; font-family: var(--font-mono); font-size: 12px; }
+
+    /* Proctoring toggles */
+    .proctor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+    .proctor-item { background: var(--surface); border-radius: var(--radius-lg); padding: var(--space-5); border: 1px solid var(--border-light); display: flex; align-items: center; gap: var(--space-4); }
+    .proctor-icon { font-size: 24px; }
+    .proctor-info h4 { font-size: 14px; font-weight: 600; color: var(--primary); }
+    .proctor-info p  { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+    /* Import modal */
+    .import-box { border: 2px dashed var(--border); border-radius: var(--radius-md); padding: var(--space-8); text-align: center; cursor: pointer; transition: var(--transition); }
+    .import-box:hover { border-color: var(--accent); background: var(--accent-soft); }
+    .import-format-tabs { display: flex; gap: var(--space-2); margin-top: var(--space-4); justify-content: center; }
+  </style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sb-brand"><div class="sb-brand-name">🛡️ Examiner Console</div><div class="sb-brand-sub">Academic Sanctuary v4.2</div></div>
+  <nav class="sb-nav">
+    <a class="sb-item" href="dashboard.html"><span class="icon">⊞</span> Dashboard</a>
+    <a class="sb-item active" href="create-exam.html"><span class="icon">✏️</span> Create Exam</a>
+    <a class="sb-item" href="monitor.html"><span class="icon">🔍</span> Live Monitor</a>
+    <a class="sb-item" href="incidents.html"><span class="icon">⚠️</span> Incidents</a>
+    <a class="sb-item" href="#"><span class="icon">📊</span> Reports</a>
+    <a class="sb-item" href="#"><span class="icon">📚</span> Question Bank</a>
+  </nav>
+</aside>
+
+<div class="main">
+  <!-- TOPNAV -->
+  <nav class="topnav">
+    <div class="tn-left">
+      <span style="font-size:14px; font-weight:700; color:var(--primary);">Create New Exam</span>
+      <span class="tn-divider">·</span>
+      <span class="tn-step active" id="step-label-1" onclick="goStep(1)">1 Basic Info</span>
+      <span class="tn-divider">›</span>
+      <span class="tn-step" id="step-label-2" onclick="goStep(2)">2 Questions</span>
+      <span class="tn-divider">›</span>
+      <span class="tn-step" id="step-label-3" onclick="goStep(3)">3 Proctoring</span>
+    </div>
+    <div class="tn-right">
+      <span class="autosave-note" id="autosave-note">Auto-saved at —</span>
+      <button class="btn btn-ghost btn-sm" onclick="saveDraft()">Save Draft</button>
+      <button class="btn btn-ghost btn-sm" onclick="previewExam()">Preview as Student</button>
+      <button class="btn btn-primary" onclick="publishExam()" id="publish-btn">Publish Exam</button>
+    </div>
+  </nav>
+
+  <div class="wizard-layout">
+    <!-- STEP SIDEBAR -->
+    <div class="step-panel">
+      <div class="sp-step active" onclick="goStep(1)" id="sp-1">
+        <div class="sp-num active" id="spn-1">1</div>
+        <div class="sp-label">Basic Info</div>
+      </div>
+      <div class="sp-connector" id="spc-1"></div>
+      <div class="sp-step" onclick="goStep(2)" id="sp-2">
+        <div class="sp-num pending" id="spn-2">2</div>
+        <div class="sp-label">Questions</div>
+      </div>
+      <div class="sp-connector" id="spc-2"></div>
+      <div class="sp-step" onclick="goStep(3)" id="sp-3">
+        <div class="sp-num pending" id="spn-3">3</div>
+        <div class="sp-label">Proctoring</div>
+      </div>
+
+      <div class="tip-box" id="tip-box">
+        <div class="tip-label">💡 Examiner Tip</div>
+        <div class="tip-text" id="tip-text">Coding questions support automated unit tests. Give at least 3 test cases for optimal grading.</div>
+      </div>
+
+      <!-- Mini preview -->
+      <div class="preview-mini" id="preview-mini">
+        <div class="pm-top">
+          <div class="pm-dot" style="background:#FF5F57;"></div>
+          <div class="pm-dot" style="background:#FEBC2E;"></div>
+          <div class="pm-dot" style="background:#28C840;"></div>
+        </div>
+        <div class="pm-body">
+          <div class="pm-title" id="pm-title">Live Preview</div>
+          <div class="pm-sub" id="pm-sub">Advanced Neural Architecture Final</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WIZARD CONTENT -->
+    <div class="wizard-content" id="wizard-content">
+
+      <!-- STEP 1: BASIC INFO -->
+      <div id="step-1" class="animate-fadeIn">
+        <div class="wc-section">
+          <div class="section-header">
+            <h2 class="section-heading">Core Configuration</h2>
+            <p class="section-sub">Define the fundamental metadata and access controls.</p>
+          </div>
+          <div class="form-grid-2" style="margin-bottom: var(--space-5);">
+            <div class="form-group">
+              <label class="form-label">Exam Title</label>
+              <input class="form-input" type="text" id="exam-title-input" placeholder="e.g. Distributed Systems Final" oninput="updatePreview()" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Duration (Minutes)</label>
+              <input class="form-input" type="number" id="exam-duration" value="120" min="5" max="300" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Abstract & Instructions</label>
+            <textarea class="form-input form-textarea" id="exam-instructions" placeholder="Define guidelines for students..." style="min-height:120px;"></textarea>
+          </div>
+        </div>
+
+        <div class="wc-section">
+          <div class="section-header">
+            <h2 class="section-heading">Access Controls</h2>
+            <p class="section-sub">Set scheduling, access codes, and student restrictions.</p>
+          </div>
+          <div class="form-grid-3">
+            <div class="form-group">
+              <label class="form-label">Start Date & Time</label>
+              <input class="form-input" type="datetime-local" id="exam-start" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">End Date & Time</label>
+              <input class="form-input" type="datetime-local" id="exam-end" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Access Passcode (Optional)</label>
+              <input class="form-input" type="text" id="exam-passcode" placeholder="Leave blank for open access" />
+            </div>
+          </div>
+          <div class="form-grid-2" style="margin-top: var(--space-5);">
+            <div class="form-group">
+              <label class="form-label">Allowed Batch / Department</label>
+              <input class="form-input" type="text" id="exam-batch" placeholder="e.g. CS2024, ALL" value="ALL" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">HOD Email (for result notification)</label>
+              <input class="form-input" type="email" id="hod-email" placeholder="hod@university.edu" />
+            </div>
+          </div>
+          <div style="display:flex; align-items:center; gap: var(--space-6); margin-top: var(--space-5);">
+            <label class="toggle-wrap">
+              <div class="toggle"><input type="checkbox" id="random-q" checked /><div class="toggle-track"></div><div class="toggle-thumb"></div></div>
+              <span style="font-size:13px; font-weight:500; color: var(--text);">Randomize Question Order</span>
+            </label>
+            <label class="toggle-wrap">
+              <div class="toggle"><input type="checkbox" id="random-opt" /><div class="toggle-track"></div><div class="toggle-thumb"></div></div>
+              <span style="font-size:13px; font-weight:500; color: var(--text);">Randomize MCQ Options</span>
+            </label>
+          </div>
+          <div style="margin-top: var(--space-5);">
+            <button class="btn btn-primary" onclick="goStep(2)">Continue to Questions →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 2: QUESTIONS -->
+      <div id="step-2" style="display:none;" class="animate-fadeIn">
+        <div class="wc-section">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: var(--space-6);">
+            <div class="section-header" style="margin-bottom:0;">
+              <h2 class="section-heading">Examination Body</h2>
+              <p class="section-sub">Design the intellectual journey.</p>
+            </div>
+            <div style="display: flex; gap: var(--space-3);">
+              <button class="btn btn-ghost btn-sm" onclick="showImportModal()">📥 Import Bank</button>
+            </div>
+          </div>
+
+          <div id="questions-list"></div>
+
+          <div style="display:flex; gap: var(--space-3);">
+            <button class="btn btn-ghost" onclick="addQuestion('mcq')">+ MCQ Question</button>
+            <button class="btn btn-ghost" onclick="addQuestion('coding')">+ Coding Challenge</button>
+          </div>
+        </div>
+        <div class="wc-section" style="border-bottom:none;">
+          <div style="display:flex; gap:var(--space-3);">
+            <button class="btn btn-ghost" onclick="goStep(1)">← Back</button>
+            <button class="btn btn-primary" onclick="goStep(3)">Continue to Proctoring →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 3: PROCTORING -->
+      <div id="step-3" style="display:none;" class="animate-fadeIn">
+        <div class="wc-section">
+          <div class="section-header">
+            <h2 class="section-heading">🛡️ Sanctuary Guard</h2>
+            <p class="section-sub">Configure proctoring and integrity protocols.</p>
+          </div>
+          <div class="proctor-grid" id="proctor-grid"></div>
+        </div>
+        <div class="wc-section">
+          <div class="section-header">
+            <h2 class="section-heading">Anti-Cheat Configuration</h2>
+            <p class="section-sub">Set violation thresholds and automated actions.</p>
+          </div>
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">Tab Switch Limit Before Auto-Submit</label>
+              <select class="form-input form-select">
+                <option value="1">1 switch (Strict)</option>
+                <option value="2">2 switches</option>
+                <option value="3" selected>3 switches (Default)</option>
+                <option value="5">5 switches (Lenient)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Proctoring Strictness</label>
+              <select class="form-input form-select">
+                <option>Strict — All violations flagged immediately</option>
+                <option selected>Medium — Flag after 2 incidents</option>
+                <option>Low — Monitoring only, no auto-action</option>
+              </select>
+            </div>
+          </div>
+          <div style="margin-top: var(--space-5); display:flex; gap: var(--space-3);">
+            <button class="btn btn-ghost" onclick="goStep(2)">← Back</button>
+            <button class="btn btn-primary btn-lg" onclick="publishExam()">🚀 Publish Exam</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- IMPORT MODAL -->
+<div class="modal-overlay hidden" id="import-modal">
+  <div class="modal-box" style="max-width:600px;">
+    <h2 style="font-size:20px; font-weight:800; color:var(--primary); margin-bottom:var(--space-5);">📥 Import Question Bank</h2>
+    <div class="import-format-tabs" style="justify-content:flex-start; margin-bottom:var(--space-4);">
+      <button class="btn btn-primary btn-sm" id="fmt-json" onclick="setImportFmt('json')">JSON</button>
+      <button class="btn btn-ghost btn-sm" id="fmt-csv" onclick="setImportFmt('csv')">CSV</button>
+      <button class="btn btn-ghost btn-sm" id="fmt-api" onclick="setImportFmt('api')">API Endpoint</button>
+    </div>
+    <div class="import-box" id="import-drop" onclick="document.getElementById('import-file').click()" ondragover="event.preventDefault()" ondrop="handleImportDrop(event)">
+      <div style="font-size:36px; margin-bottom:var(--space-3);">📂</div>
+      <div style="font-size:15px; font-weight:600; color:var(--primary); margin-bottom:var(--space-2);">Drop your JSON file here</div>
+      <div style="font-size:12px; color:var(--text-muted);">or click to browse • Max 10MB</div>
+      <input type="file" id="import-file" accept=".json,.csv" style="display:none;" onchange="handleImportFile(event)" />
+    </div>
+    <div id="api-import-box" style="display:none; margin-top:var(--space-4);">
+      <div class="form-group">
+        <label class="form-label">API Endpoint URL</label>
+        <input class="form-input" type="url" id="api-url" placeholder="https://yourapi.com/questions?bank=algorithms" />
+      </div>
+      <div class="form-group" style="margin-top:var(--space-3);">
+        <label class="form-label">API Key (Optional)</label>
+        <input class="form-input" type="text" id="api-key" placeholder="Bearer token or API key" />
+      </div>
+      <button class="btn btn-primary" style="margin-top:var(--space-3);" onclick="fetchFromAPI()">Fetch Questions</button>
+    </div>
+    <div style="display:flex; gap:var(--space-3); margin-top:var(--space-5);">
+      <button class="btn btn-ghost flex-1" onclick="hideImportModal()">Cancel</button>
+      <button class="btn btn-primary flex-1" onclick="importSampleJSON()">Load Sample Bank</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+// ─── WIZARD ─────────────────────────────────────────────────
+let currentStep = 1;
+let questions   = [];
+let proctor_settings = {};
+
+function goStep(n) {
+  currentStep = n;
+  [1,2,3].forEach(i => {
+    document.getElementById(`step-${i}`).style.display = i === n ? '' : 'none';
+    const label = document.getElementById(`step-label-${i}`);
+    label.classList.toggle('active', i === n);
+    const spn = document.getElementById(`spn-${i}`);
+    spn.className = i < n ? 'sp-num done' : i === n ? 'sp-num active' : 'sp-num pending';
+    document.getElementById(`sp-${i}`).classList.toggle('active', i === n);
+    if (i < 3) document.getElementById(`spc-${i}`).classList.toggle('done', i < n);
+  });
+
+  const tips = {
+    1: 'Set a clear exam title and include detailed instructions. HOD email enables automatic result delivery.',
+    2: 'Coding questions support automated unit tests. Give at least 3 test cases for optimal grading.',
+    3: 'Strict proctoring enables AI gaze tracking. Medium mode is recommended for most exams.'
+  };
+  document.getElementById('tip-text').textContent = tips[n];
+  saveDraft();
+}
+
+function updatePreview() {
+  const title = document.getElementById('exam-title-input')?.value;
+  document.getElementById('pm-sub').textContent = title || 'Advanced Neural Architecture Final';
+}
+
+// ─── QUESTIONS ───────────────────────────────────────────────
+function addQuestion(type) {
+  const q = { type, id: Date.now(), title: '', options: ['','','',''], correct: 0, points: type === 'coding' ? 25 : 10, code: '', testCases: [{ input: '', output: '' }] };
+  questions.push(q);
+  renderQuestions();
+}
+
+function removeQuestion(idx) {
+  questions.splice(idx, 1);
+  renderQuestions();
+}
+
+function renderQuestions() {
+  const list = document.getElementById('questions-list');
+  list.innerHTML = questions.map((q, i) => `
+    <div class="q-item" id="q-item-${i}">
+      <div class="q-item-header">
+        <span class="q-drag">⠿</span>
+        <span class="badge ${q.type === 'mcq' ? 'badge-accent' : 'badge-primary'}">${q.type.toUpperCase()}</span>
+        <span class="q-num">Question ${i + 1}</span>
+        <span class="q-delete" onclick="removeQuestion(${i})">🗑</span>
+      </div>
+      <div class="q-item-body">
+        <div class="form-group" style="margin-bottom: var(--space-4);">
+          <label class="form-label">Question Text *</label>
+          <textarea class="form-input" rows="2" placeholder="Enter your question..." oninput="questions[${i}].title=this.value">${q.title}</textarea>
+        </div>
+        <div style="display:grid; grid-template-columns: auto 1fr; gap: var(--space-3); align-items:center; margin-bottom:var(--space-4);">
+          <span style="font-size:13px; font-weight:600; color:var(--text-muted);">Points:</span>
+          <input class="form-input" type="number" value="${q.points}" min="1" style="width:100px;" oninput="questions[${i}].points=parseInt(this.value)" />
+        </div>
+        ${q.type === 'mcq' ? renderMCQOptions(q, i) : renderCodingFields(q, i)}
+      </div>
+    </div>`).join('');
+}
+
+function renderMCQOptions(q, idx) {
+  const letters = ['A','B','C','D'];
+  return `
+    <div class="form-label" style="margin-bottom: var(--space-3);">Answer Options (click radio to set correct)</div>
+    ${q.options.map((opt, oi) => `
+      <div class="option-row">
+        <div class="option-radio ${oi === q.correct ? 'correct' : ''}" onclick="setCorrect(${idx}, ${oi})"></div>
+        <input class="form-input option-input" type="text" placeholder="Option ${letters[oi]}" value="${opt}" oninput="questions[${idx}].options[${oi}]=this.value" />
+      </div>`).join('')}`;
+}
+
+function renderCodingFields(q, idx) {
+  return `
+    <div class="form-group" style="margin-bottom: var(--space-4);">
+      <label class="form-label">Starter Code</label>
+      <textarea class="code-starter" rows="8" oninput="questions[${idx}].code=this.value">${q.code || 'def solution():\n    # Student code starts here\n    pass'}</textarea>
+    </div>
+    <div>
+      <div class="form-label" style="margin-bottom: var(--space-3);">Automated Test Cases</div>
+      <div id="tc-list-${idx}">
+        ${q.testCases.map((tc, ti) => `
+          <div class="tc-row">
+            <span class="tc-label">CASE ${ti+1}</span>
+            <input class="form-input tc-input" type="text" placeholder="Input: [1,2,3], 2" value="${tc.input}" oninput="questions[${idx}].testCases[${ti}].input=this.value" />
+            <span style="font-size:12px; color:var(--text-muted);">Output:</span>
+            <input class="form-input tc-output" type="text" placeholder="1" value="${tc.output}" oninput="questions[${idx}].testCases[${ti}].output=this.value" />
+            <span style="cursor:pointer; color:var(--text-faint); font-size:14px;" onclick="removeTC(${idx},${ti})">✕</span>
+          </div>`).join('')}
+      </div>
+      <button class="add-option-btn" onclick="addTC(${idx})">+ Add Test Case</button>
+    </div>`;
+}
+
+function setCorrect(qIdx, oIdx) {
+  questions[qIdx].correct = oIdx;
+  renderQuestions();
+}
+function addTC(qIdx) { questions[qIdx].testCases.push({ input: '', output: '' }); renderQuestions(); }
+function removeTC(qIdx, tcIdx) { questions[qIdx].testCases.splice(tcIdx, 1); renderQuestions(); }
+
+// ─── PROCTORING ──────────────────────────────────────────────
+const PROCTOR_ITEMS = [
+  { key: 'ai_video', icon: '🎥', label: 'AI Video Monitoring', desc: 'Continuous gaze tracking and environment scanning via student webcam.', default: true },
+  { key: 'lockdown', icon: '🔒', label: 'Lockdown Browser', desc: 'Prevents tab switching, screen sharing, and external application use.', default: false },
+  { key: 'fullscreen', icon: '📺', label: 'Fullscreen Enforcement', desc: 'Requires students to stay in fullscreen mode throughout the exam.', default: true },
+  { key: 'snapshots', icon: '📸', label: 'Periodic Snapshots', desc: 'Captures webcam snapshots every 30 seconds for review.', default: true },
+  { key: 'ip_monitor', icon: '🌐', label: 'IP Address Monitor', desc: 'Detects IP changes that may indicate VPN or proxy usage.', default: true },
+  { key: 'copy_paste', icon: '📋', label: 'Copy/Paste Blocking', desc: 'Disables Ctrl+C, Ctrl+V, and right-click menus during exam.', default: true },
+  { key: 'id_verify', icon: '🪪', label: 'Identity Verification', desc: 'Requires photo + ID card verification before exam entry.', default: true },
+  { key: 'buzzer',    icon: '⚡', label: 'Buzzer Mode (Mock)', desc: 'Enable competitive buzzer mode for mock test sessions.', default: false },
+];
+
+function renderProctor() {
+  const grid = document.getElementById('proctor-grid');
+  PROCTOR_ITEMS.forEach(item => {
+    const checked = proctor_settings[item.key] !== undefined ? proctor_settings[item.key] : item.default;
+    grid.innerHTML += `
+      <div class="proctor-item">
+        <div class="proctor-icon">${item.icon}</div>
+        <div class="proctor-info" style="flex:1;">
+          <h4>${item.label}</h4>
+          <p>${item.desc}</p>
+        </div>
+        <label class="toggle" style="flex-shrink:0;">
+          <input type="checkbox" ${checked ? 'checked' : ''} onchange="proctor_settings['${item.key}']=this.checked" />
+          <div class="toggle-track"></div><div class="toggle-thumb"></div>
+        </label>
+      </div>`;
+    proctor_settings[item.key] = checked;
+  });
+}
+
+// ─── IMPORT ──────────────────────────────────────────────────
+let importFmt = 'json';
+function showImportModal() { document.getElementById('import-modal').classList.remove('hidden'); }
+function hideImportModal() { document.getElementById('import-modal').classList.add('hidden'); }
+function setImportFmt(fmt) {
+  importFmt = fmt;
+  ['json','csv','api'].forEach(f => document.getElementById(`fmt-${f}`).className = f === fmt ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm');
+  document.getElementById('api-import-box').style.display = fmt === 'api' ? '' : 'none';
+  document.getElementById('import-drop').style.display    = fmt !== 'api' ? '' : 'none';
+}
+function handleImportDrop(e) { e.preventDefault(); handleImportFile({ target: { files: e.dataTransfer.files } }); }
+function handleImportFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      const qs   = Array.isArray(data) ? data : data.questions || [];
+      qs.forEach(q => questions.push({ type: q.type || 'mcq', id: Date.now(), title: q.question || q.title || '', options: q.options || ['','','',''], correct: q.answer || q.correct || 0, points: q.points || 10, code: q.starter_code || '', testCases: q.test_cases || [{ input: '', output: '' }] }));
+      renderQuestions();
+      hideImportModal();
+      showToast(`Imported ${qs.length} questions`, 'success');
+    } catch { showToast('Invalid JSON format', 'danger'); }
+  };
+  reader.readAsText(file);
+}
+function importSampleJSON() {
+  const sample = [
+    { type:'mcq', title:'What is Big-O of binary search?', options:['O(log n)','O(n)','O(n²)','O(1)'], correct:0, points:10 },
+    { type:'mcq', title:'Which data structure is used in BFS?', options:['Queue','Stack','Heap','Graph'], correct:0, points:10 },
+    { type:'coding', title:'Reverse a linked list', code:'def reverse(head):\n    pass', testCases:[{input:'1->2->3',output:'3->2->1'}], points:25 }
+  ];
+  sample.forEach(q => questions.push({ ...q, id: Date.now() + Math.random() }));
+  renderQuestions();
+  hideImportModal();
+  goStep(2);
+  showToast(`Loaded ${sample.length} sample questions`, 'success');
+}
+async function fetchFromAPI() {
+  const url = document.getElementById('api-url').value.trim();
+  if (!url) { showToast('Enter an API URL', 'danger'); return; }
+  showToast('Fetching questions from API...', '');
+  try {
+    const r = await fetch(url);
+    const d = await r.json();
+    const qs = Array.isArray(d) ? d : d.questions || [];
+    qs.forEach(q => questions.push({ type: q.type || 'mcq', id: Date.now(), title: q.question || '', options: q.options || [], correct: q.correct || 0, points: q.points || 10 }));
+    renderQuestions(); hideImportModal();
+    showToast(`Imported ${qs.length} questions from API`, 'success');
+  } catch { showToast('API fetch failed', 'danger'); }
+}
+
+// ─── PUBLISH ─────────────────────────────────────────────────
+function saveDraft() {
+  const exam = buildExamData();
+  localStorage.setItem('as_draft_exam', JSON.stringify(exam));
+  const now = new Date();
+  document.getElementById('autosave-note').textContent = `Auto-saved at ${now.getHours()}:${now.getMinutes().toString().padStart(2,'0')}`;
+}
+
+function buildExamData() {
+  return {
+    title:       document.getElementById('exam-title-input')?.value || 'Untitled Exam',
+    duration:    document.getElementById('exam-duration')?.value || 120,
+    instructions: document.getElementById('exam-instructions')?.value || '',
+    hodEmail:    document.getElementById('hod-email')?.value || '',
+    randomQ:     document.getElementById('random-q')?.checked,
+    questions,
+    proctoring:  proctor_settings,
+    published:   false,
+    createdAt:   Date.now()
+  };
+}
+
+function previewExam() { saveDraft(); window.open('../student/exam.html', '_blank'); }
+
+function publishExam() {
+  const exam = { ...buildExamData(), published: true, publishedAt: Date.now() };
+  const exams = JSON.parse(localStorage.getItem('as_exams') || '[]');
+  exams.push(exam);
+  localStorage.setItem('as_exams', JSON.stringify(exams));
+  showToast('🚀 Exam published successfully!', 'success');
+  setTimeout(() => window.location.href = 'dashboard.html', 1500);
+}
+
+function showToast(msg, type='') {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = `toast toast-${type}`;
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+
+// Init
+renderProctor();
+// Load draft
+const draft = JSON.parse(localStorage.getItem('as_draft_exam') || 'null');
+if (draft && draft.questions) { questions = draft.questions; renderQuestions(); }
+// Auto-save every 30s
+setInterval(saveDraft, 30000);
+// Check anchor for import
+if (location.hash === '#import') { goStep(2); showImportModal(); }
+</script>
+</body>
+</html>

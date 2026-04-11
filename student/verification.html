@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Identity Verification — Academic Sanctuary</title>
+  <link rel="stylesheet" href="../css/globals.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <style>
+    body { background: var(--bg); min-height: 100vh; }
+    .page { display: grid; grid-template-columns: 380px 1fr; min-height: 100vh; }
+
+    /* ─── LEFT PANEL ─── */
+    .left-panel { padding: var(--space-12) var(--space-8); display: flex; flex-direction: column; justify-content: space-between; }
+    .left-top {}
+    .stage-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--accent-soft); color: var(--accent);
+      font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+      padding: 6px 14px; border-radius: var(--radius-full); margin-bottom: var(--space-6);
+    }
+    .stage-badge::before { content: ''; width: 6px; height: 6px; background: var(--accent); border-radius: 50%; }
+    .left-title { font-size: 40px; font-weight: 900; color: var(--primary); letter-spacing: -0.03em; line-height: 1.1; margin-bottom: var(--space-5); }
+    .left-desc  { font-size: 14px; color: var(--text-secondary); line-height: 1.7; margin-bottom: var(--space-8); }
+
+    .stage-list { display: flex; flex-direction: column; gap: 4px; }
+    .verify-stage { padding: var(--space-3) 0; border-bottom: 1px solid var(--border-light); }
+    .verify-stage:last-child { border-bottom: none; }
+    .verify-stage-row { display: flex; align-items: center; gap: var(--space-3); }
+    .vs-icon {
+      width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 16px;
+    }
+    .vs-icon.done    { background: var(--teal-soft); color: var(--teal-dark); }
+    .vs-icon.active  { background: var(--primary); color: #fff; }
+    .vs-icon.pending { background: var(--bg-alt); color: var(--text-faint); border: 1.5px solid var(--border); }
+    .vs-text {}
+    .vs-title   { font-size: 14px; font-weight: 600; color: var(--text); }
+    .vs-title.pending { color: var(--text-muted); }
+    .vs-sub     { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+    .left-footer {
+      font-size: 11px; color: var(--text-muted); line-height: 1.6;
+      display: flex; align-items: flex-start; gap: var(--space-2);
+      padding: var(--space-4); background: var(--bg-alt); border-radius: var(--radius);
+    }
+    .left-footer .info-icon { font-size: 14px; flex-shrink: 0; margin-top: 2px; }
+
+    /* ─── RIGHT PANEL ─── */
+    .right-panel {
+      background: var(--surface); display: flex; gap: var(--space-6);
+      padding: var(--space-8); align-items: flex-start;
+      border-left: 1px solid var(--border-light);
+    }
+
+    /* Webcam card */
+    .webcam-card {
+      flex: 1; background: var(--surface); border-radius: var(--radius-xl);
+      border: 1px solid var(--border-light); box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+    .webcam-card-header {
+      padding: var(--space-4) var(--space-5);
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .webcam-card-title { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); }
+    .webcam-body { padding: var(--space-5); display: flex; flex-direction: column; gap: var(--space-5); }
+    .video-frame {
+      border-radius: var(--radius-md); overflow: hidden;
+      background: var(--dark-bg); position: relative;
+      aspect-ratio: 4/3;
+    }
+    #webcam-video {
+      width: 100%; height: 100%; object-fit: cover;
+      transform: scaleX(-1); display: block;
+    }
+    .video-frame .webcam-overlay { position: absolute; inset: 0; pointer-events: none; }
+    .face-ring {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 140px; height: 160px;
+      border: 2px solid rgba(110,231,199,0.7); border-radius: 50%;
+      box-shadow: 0 0 20px rgba(110,231,199,0.3);
+    }
+    .face-ring-scan {
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--teal), transparent);
+      animation: scanLine 2s linear infinite;
+    }
+    @keyframes scanLine {
+      0%   { top: 0%; }
+      50%  { top: 100%; }
+      50.01% { top: 0%; }
+      100% { top: 100%; }
+    }
+    .video-status-bar {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      padding: 8px 14px;
+      background: linear-gradient(transparent, rgba(0,0,0,0.8));
+      color: rgba(255,255,255,0.9); font-size: 11px; font-family: var(--font-mono);
+    }
+    .ai-status { color: var(--teal); }
+
+    .webcam-action-btn {
+      width: 100%; padding: 14px; border-radius: 60px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      color: #fff; font-size: 15px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center; gap: var(--space-2);
+      cursor: pointer; border: none; transition: var(--transition);
+      box-shadow: var(--shadow-accent);
+    }
+    .webcam-action-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(74,95,191,0.4); }
+    .webcam-action-btn.captured {
+      background: linear-gradient(135deg, var(--success), #059669);
+    }
+
+    /* ID card */
+    .id-card-card {
+      width: 320px; flex-shrink: 0;
+      background: var(--surface); border-radius: var(--radius-xl);
+      border: 1.5px dashed var(--border); box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+    .id-card-header {
+      padding: var(--space-3) var(--space-5);
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .id-card-header-title { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); }
+    .id-body { padding: var(--space-5); display: flex; flex-direction: column; gap: var(--space-5); }
+
+    .id-drop-zone {
+      border: 1.5px dashed var(--border); border-radius: var(--radius-md);
+      padding: var(--space-8) var(--space-5);
+      text-align: center; cursor: pointer; transition: var(--transition);
+      background: var(--bg);
+    }
+    .id-drop-zone:hover, .id-drop-zone.drag-over {
+      border-color: var(--accent); background: var(--accent-soft);
+    }
+    .id-drop-icon { font-size: 40px; margin-bottom: var(--space-3); }
+    .id-drop-title { font-size: 15px; font-weight: 600; color: var(--primary); margin-bottom: var(--space-2); }
+    .id-drop-sub   { font-size: 12px; color: var(--text-muted); }
+    #id-file-input { display: none; }
+
+    .id-preview {
+      border-radius: var(--radius-md); overflow: hidden;
+      background: var(--bg-alt); border: 1px solid var(--border-light);
+      aspect-ratio: 16/10; display: none;
+      align-items: center; justify-content: center;
+    }
+    .id-preview img { width: 100%; height: 100%; object-fit: cover; }
+    .id-preview.show { display: flex; }
+
+    .id-doc-info {
+      background: var(--bg);  border-radius: var(--radius-md);
+      padding: var(--space-5); border: 1px solid var(--border-light);
+    }
+    .id-doc-icon { font-size: 32px; margin-bottom: var(--space-3); text-align: center; }
+    .id-doc-title { font-size: 16px; font-weight: 700; color: var(--primary); margin-bottom: var(--space-2); text-align: center; }
+    .id-doc-sub   { font-size: 12px; color: var(--text-muted); text-align: center; line-height: 1.6; }
+
+    .id-upload-btn {
+      width: 100%; padding: 12px; border-radius: var(--radius-full);
+      background: var(--bg-alt); border: 1.5px solid var(--border);
+      font-size: 14px; font-weight: 600; color: var(--primary);
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      cursor: pointer; transition: var(--transition);
+    }
+    .id-upload-btn:hover { background: var(--primary-soft); border-color: var(--primary); }
+
+    /* Page header */
+    .page-topbar {
+      position: fixed; top: 0; left: 0; right: 0; height: 56px;
+      background: rgba(244,243,239,0.9); backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border-light); z-index: var(--z-dropdown);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 var(--space-8);
+    }
+    .page-topbar-logo { font-size: 15px; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+    .page-topbar-proto { font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
+    body { padding-top: 56px; }
+
+    /* Proceed overlay */
+    .proceed-btn-wrap {
+      position: fixed; bottom: 32px; right: 40px;
+    }
+    .proceed-btn-wrap .btn { font-size: 15px; padding: 15px 36px; }
+  </style>
+</head>
+<body>
+
+<!-- topbar -->
+<header class="page-topbar">
+  <div class="page-topbar-logo">🛡️ The Academic Sanctuary</div>
+  <div class="page-topbar-proto">🔒 Institutional Security Protocol v4.2 &nbsp;|&nbsp; 🌐</div>
+</header>
+
+<div class="page">
+  <!-- ─── LEFT ─── -->
+  <div class="left-panel animate-fadeIn">
+    <div class="left-top">
+      <div class="stage-badge" id="stage-badge">• Verification Stage 2/3</div>
+      <h1 class="left-title">Confirming Your Academic Identity</h1>
+      <p class="left-desc">To maintain the integrity of the examination environment, please complete the biometric and document scan.</p>
+
+      <div class="stage-list">
+        <div class="verify-stage">
+          <div class="verify-stage-row">
+            <div class="vs-icon done" id="stage1-icon">✓</div>
+            <div class="vs-text">
+              <div class="vs-title">Credentials Verified</div>
+              <div class="vs-sub">Institutional ID login successful</div>
+            </div>
+          </div>
+        </div>
+        <div class="verify-stage">
+          <div class="verify-stage-row">
+            <div class="vs-icon active" id="stage2-icon">🪪</div>
+            <div class="vs-text">
+              <div class="vs-title" id="stage2-title">Biometric Identity</div>
+              <div class="vs-sub">Live facial &amp; ID card validation</div>
+            </div>
+          </div>
+        </div>
+        <div class="verify-stage">
+          <div class="verify-stage-row">
+            <div class="vs-icon pending" id="stage3-icon">🔐</div>
+            <div class="vs-text">
+              <div class="vs-title pending" id="stage3-title">Secure Access</div>
+              <div class="vs-sub">Final decryption &amp; entry</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="left-footer">
+      <span class="info-icon">ℹ️</span>
+      <span>Data encrypted via AES-256 GCM. Biometric tokens are discarded immediately after session validation in compliance with GDPR and institutional privacy standards.</span>
+    </div>
+  </div>
+
+  <!-- ─── RIGHT ─── -->
+  <div class="right-panel animate-fadeIn delay-2">
+
+    <!-- WEBCAM CARD -->
+    <div class="webcam-card">
+      <div class="webcam-card-header">
+        <span class="webcam-card-title">Primary Biometric</span>
+        <span class="live-badge">LIVE</span>
+      </div>
+      <div class="webcam-body">
+        <div class="video-frame" id="video-frame">
+          <video id="webcam-video" autoplay playsinline muted></video>
+          <div class="webcam-overlay">
+            <div class="face-ring"><div class="face-ring-scan"></div></div>
+          </div>
+          <div class="video-status-bar">
+            <span class="ai-status" id="ai-status">AI_SCAN: INITIALIZING...</span>
+          </div>
+        </div>
+        <div>
+          <h3 style="font-size: 18px; font-weight: 700; color: var(--primary); margin-bottom: 6px;">Student Face Verification</h3>
+          <p style="font-size: 13px; color: var(--text-secondary);">Align your face within the frame and ensure your surroundings are well-lit.</p>
+        </div>
+        <button class="webcam-action-btn" id="capture-btn" onclick="capturePhoto()">
+          ⚙️ Capture Biometrics
+        </button>
+        <canvas id="snapshot-canvas" style="display:none;"></canvas>
+      </div>
+    </div>
+
+    <!-- ID CARD -->
+    <div class="id-card-card">
+      <div class="id-card-header">
+        <span class="id-card-header-title">Document Scan</span>
+        <span style="font-size: 20px;">🪪</span>
+      </div>
+      <div class="id-body">
+        <div class="id-drop-zone" id="id-drop-zone" onclick="document.getElementById('id-file-input').click()" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragleave="handleDragLeave(event)">
+          <div class="id-drop-icon">📄</div>
+          <div class="id-drop-title">ID Card Placeholder</div>
+          <div class="id-drop-sub">Place your Institutional ID here or click to upload a scan</div>
+        </div>
+        <input type="file" id="id-file-input" accept="image/*" onchange="handleFileSelect(event)" />
+        <div class="id-preview" id="id-preview">
+          <img id="id-preview-img" src="" alt="ID Preview" />
+        </div>
+
+        <div class="id-doc-info">
+          <div class="id-doc-icon">📋</div>
+          <div class="id-doc-title">Identity Document</div>
+          <div class="id-doc-sub">National ID or University Badge. Details must be clearly legible.</div>
+        </div>
+
+        <button class="id-upload-btn" onclick="document.getElementById('id-file-input').click()">
+          ⬆️ Upload Document
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Proceed button -->
+<div class="proceed-btn-wrap" id="proceed-wrap" style="display:none;">
+  <button class="btn btn-primary btn-lg" onclick="proceedToExam()" id="proceed-btn">
+    ✓ Proceed to Exam →
+  </button>
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+  let bioCaptured = false, idUploaded = false;
+  let stream = null;
+
+  // Start webcam
+  async function startWebcam() {
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: 640, height: 480 }, audio: false });
+      document.getElementById('webcam-video').srcObject = stream;
+      simulateAIScan();
+    } catch(e) {
+      document.getElementById('ai-status').textContent = 'AI_SCAN: CAMERA_UNAVAILABLE';
+      showToast('Camera access required for verification', 'danger');
+    }
+  }
+
+  let scanPct = 0;
+  function simulateAIScan() {
+    const el = document.getElementById('ai-status');
+    const interval = setInterval(() => {
+      scanPct = Math.min(scanPct + Math.floor(Math.random() * 8 + 2), 100);
+      el.textContent = `AI_SCAN: FACE_RECOGNITION_ACTIVE (${scanPct}%)`;
+      if (scanPct >= 100) {
+        el.textContent = 'AI_SCAN: FACE_DETECTED ✓';
+        clearInterval(interval);
+      }
+    }, 200);
+  }
+
+  function capturePhoto() {
+    const video  = document.getElementById('webcam-video');
+    const canvas = document.getElementById('snapshot-canvas');
+    const btn    = document.getElementById('capture-btn');
+    if (!stream) { showToast('Camera not ready', 'danger'); return; }
+    canvas.width  = video.videoWidth  || 640;
+    canvas.height = video.videoHeight || 480;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+    localStorage.setItem('as_bio_snapshot', dataUrl);
+    bioCaptured = true;
+    btn.textContent = '✓ Biometrics Captured';
+    btn.classList.add('captured');
+    showToast('Biometric captured successfully', 'success');
+    checkProceed();
+  }
+
+  function handleDragOver(e)  { e.preventDefault(); document.getElementById('id-drop-zone').classList.add('drag-over'); }
+  function handleDragLeave(e) { document.getElementById('id-drop-zone').classList.remove('drag-over'); }
+  function handleDrop(e) {
+    e.preventDefault();
+    document.getElementById('id-drop-zone').classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) processIDFile(file);
+  }
+  function handleFileSelect(e) { const file = e.target.files[0]; if (file) processIDFile(file); }
+
+  function processIDFile(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = document.getElementById('id-preview-img');
+      img.src = e.target.result;
+      const preview = document.getElementById('id-preview');
+      preview.classList.add('show');
+      document.getElementById('id-drop-zone').style.display = 'none';
+      localStorage.setItem('as_id_doc', e.target.result);
+      idUploaded = true;
+      showToast('ID document uploaded', 'success');
+      checkProceed();
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function checkProceed() {
+    if (bioCaptured && idUploaded) {
+      document.getElementById('proceed-wrap').style.display = 'block';
+      document.getElementById('proceed-wrap').style.animation = 'fadeInUp 0.5s var(--ease) both';
+      // Update stage 3 to active
+      document.getElementById('stage3-icon').className = 'vs-icon active';
+      document.getElementById('stage3-icon').textContent = '🔐';
+      document.getElementById('stage3-title').className = 'vs-title';
+    }
+  }
+
+  function proceedToExam() {
+    localStorage.setItem('as_verified', 'true');
+    showToast('Identity verified! Entering exam...', 'success');
+    setTimeout(() => { window.location.href = 'exam.html'; }, 800);
+  }
+
+  function showToast(msg, type = '') {
+    const c = document.getElementById('toast-container');
+    const t = document.createElement('div');
+    t.className = `toast toast-${type}`;
+    const icons = { success: '✓', warning: '⚠', danger: '✕' };
+    t.innerHTML = `<span>${icons[type] || 'ℹ'}</span><span>${msg}</span>`;
+    c.appendChild(t);
+    setTimeout(() => t.remove(), 3500);
+  }
+
+  startWebcam();
+</script>
+</body>
+</html>

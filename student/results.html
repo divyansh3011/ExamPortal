@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Exam Results — Academic Sanctuary</title>
+  <link rel="stylesheet" href="../css/globals.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { background: var(--bg); min-height: 100vh; }
+    .page-header { background: var(--surface); border-bottom: 1px solid var(--border-light); padding: 0 var(--space-8); height: 60px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
+    .page-content { max-width: 1100px; margin: 0 auto; padding: var(--space-8); }
+
+    /* ─── SCORE HERO ─── */
+    .score-hero { background: var(--surface); border-radius: var(--radius-xl); padding: var(--space-10); border: 1px solid var(--border-light); box-shadow: var(--shadow-sm); margin-bottom: var(--space-6); display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--space-8); align-items: center; }
+    .sh-left {}
+    .sh-title { font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); margin-bottom: var(--space-3); }
+    .sh-exam  { font-size: 26px; font-weight: 800; color: var(--primary); margin-bottom: var(--space-4); }
+    .sh-meta  { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+    .sh-center { text-align: center; }
+    .score-circle { width: 160px; height: 160px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--accent)); display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 0 auto; box-shadow: var(--shadow-accent); }
+    .sc-val   { font-size: 44px; font-weight: 900; color: #fff; line-height: 1; }
+    .sc-label { font-size: 12px; color: rgba(255,255,255,0.7); font-weight: 600; }
+    .sh-right { display: flex; flex-direction: column; gap: var(--space-4); }
+    .metric-row { display: flex; align-items: center; justify-content: space-between; padding: var(--space-3) var(--space-4); background: var(--bg); border-radius: var(--radius); }
+    .metric-label { font-size: 13px; color: var(--text-muted); font-weight: 500; }
+    .metric-val   { font-size: 15px; font-weight: 700; color: var(--primary); }
+
+    /* ─── ANALYTICS GRID ─── */
+    .analytics-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--space-5); margin-bottom: var(--space-6); }
+    .chart-card { background: var(--surface); border-radius: var(--radius-xl); padding: var(--space-6); border: 1px solid var(--border-light); box-shadow: var(--shadow-sm); }
+    .chart-card-title { font-size: 15px; font-weight: 700; color: var(--primary); margin-bottom: var(--space-2); }
+    .chart-card-sub   { font-size: 12px; color: var(--text-muted); margin-bottom: var(--space-5); }
+
+    /* ─── ANSWER ANALYSIS ─── */
+    .analysis-card { background: var(--surface); border-radius: var(--radius-xl); padding: var(--space-6); border: 1px solid var(--border-light); box-shadow: var(--shadow-sm); margin-bottom: var(--space-6); }
+    .analysis-table-wrapper { overflow-x: auto; }
+    .analysis-row { display: grid; grid-template-columns: 40px 1fr auto auto auto; gap: var(--space-4); align-items: center; padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border-light); transition: var(--transition-fast); }
+    .analysis-row:last-child { border-bottom: none; }
+    .analysis-row:hover { background: var(--bg); }
+    .analysis-q-num { font-size: 12px; font-weight: 700; color: var(--text-muted); text-align: center; }
+    .analysis-q-title { font-size: 14px; color: var(--text); font-weight: 500; }
+    .analysis-q-topic { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .result-chip { padding: 3px 10px; border-radius: var(--radius-full); font-size: 11px; font-weight: 700; }
+    .result-chip.correct { background: var(--success-soft); color: var(--success); }
+    .result-chip.wrong   { background: var(--danger-soft);  color: var(--danger); }
+    .result-chip.partial { background: var(--warning-soft); color: #B45309; }
+    .time-taken { font-size: 12px; color: var(--text-muted); }
+    .analysis-header { display: grid; grid-template-columns: 40px 1fr auto auto auto; gap: var(--space-4); padding: var(--space-3) var(--space-4); border-bottom: 2px solid var(--border); }
+    .ah-label { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
+
+    /* ─── AI RESUME ─── */
+    .resume-card { background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%); border-radius: var(--radius-xl); padding: var(--space-8); color: #fff; margin-bottom: var(--space-6); position: relative; overflow: hidden; }
+    .resume-card::before { content: ''; position: absolute; top: -40px; right: -40px; width: 200px; height: 200px; border-radius: 50%; background: rgba(255,255,255,0.05); }
+    .resume-card::after  { content: ''; position: absolute; bottom: -60px; left: 30%; width: 250px; height: 250px; border-radius: 50%; background: rgba(255,255,255,0.04); }
+    .resume-title { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.7; margin-bottom: var(--space-3); position: relative; z-index: 1; }
+    .resume-name  { font-size: 28px; font-weight: 900; margin-bottom: var(--space-1); position: relative; z-index: 1; }
+    .resume-role  { font-size: 15px; opacity: 0.8; margin-bottom: var(--space-6); position: relative; z-index: 1; }
+    .resume-skills { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-6); position: relative; z-index: 1; }
+    .resume-skill { padding: 6px 14px; border-radius: var(--radius-full); background: rgba(255,255,255,0.15); font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 6px; }
+    .resume-skill .sl { font-size: 10px; font-weight: 700; background: rgba(255,255,255,0.2); padding: 2px 7px; border-radius: var(--radius-full); }
+    .resume-summary { font-size: 14px; line-height: 1.7; opacity: 0.85; max-width: 600px; position: relative; z-index: 1; }
+    .resume-actions { display: flex; gap: var(--space-3); position: relative; z-index: 1; margin-top: var(--space-6); }
+    .resume-dl-btn { padding: 11px 24px; border-radius: var(--radius-full); background: rgba(255,255,255,0.2); border: 1.5px solid rgba(255,255,255,0.3); color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; transition: var(--transition-fast); }
+    .resume-dl-btn:hover { background: rgba(255,255,255,0.3); }
+
+    /* ─── INCIDENTS ─── */
+    .incident-summary { background: var(--warning-soft); border: 1px solid rgba(245,158,11,0.3); border-radius: var(--radius-lg); padding: var(--space-5); margin-bottom: var(--space-6); }
+    .incident-row { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2) 0; font-size: 13px; }
+    .incident-icon { font-size: 16px; }
+    .incident-text { color: var(--text-secondary); }
+    .incident-count { font-weight: 700; color: var(--warning); }
+  </style>
+</head>
+<body>
+
+<header class="page-header">
+  <div style="display:flex; align-items:center; gap: var(--space-4);">
+    <a href="dashboard.html" style="font-size:13px; color: var(--text-muted);">← Dashboard</a>
+    <span style="color: var(--border);">|</span>
+    <span style="font-size: 15px; font-weight: 700; color: var(--primary);">Exam Results</span>
+  </div>
+  <div style="display:flex; gap: var(--space-3);">
+    <button class="btn btn-ghost btn-sm" onclick="window.print()">🖨️ Print</button>
+    <button class="btn btn-primary btn-sm" onclick="downloadReport()">⬇ Download Report</button>
+  </div>
+</header>
+
+<div class="page-content animate-fadeIn">
+
+  <!-- SCORE HERO -->
+  <div class="score-hero">
+    <div class="sh-left">
+      <div class="sh-title">Examination Certificate</div>
+      <div class="sh-exam" id="r-exam-name">Advanced Algorithms Final</div>
+      <div class="sh-meta">
+        <span class="badge badge-primary" id="r-grade-badge">Grade A</span>
+        <span class="badge badge-muted"   id="r-date"></span>
+        <span class="badge badge-success" id="r-status">Completed</span>
+      </div>
+    </div>
+    <div class="sh-center">
+      <div class="score-circle">
+        <div class="sc-val" id="r-pct">0%</div>
+        <div class="sc-label">Score</div>
+      </div>
+      <div style="margin-top: var(--space-4); font-size: 24px; font-weight: 800; color: var(--primary);" id="r-score-frac">0/155</div>
+    </div>
+    <div class="sh-right">
+      <div class="metric-row">
+        <span class="metric-label">⏱️ Time Taken</span>
+        <span class="metric-val" id="r-time">—</span>
+      </div>
+      <div class="metric-row">
+        <span class="metric-label">✅ Correct</span>
+        <span class="metric-val" id="r-correct" style="color: var(--success);">—</span>
+      </div>
+      <div class="metric-row">
+        <span class="metric-label">❌ Incorrect</span>
+        <span class="metric-val" id="r-wrong" style="color: var(--danger);">—</span>
+      </div>
+      <div class="metric-row">
+        <span class="metric-label">⚡ Accuracy</span>
+        <span class="metric-val" id="r-accuracy">—</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- INCIDENT SUMMARY -->
+  <div class="incident-summary" id="incident-summary" style="display:none;">
+    <h3 style="font-size: 15px; font-weight: 700; color: #B45309; margin-bottom: var(--space-3);">⚠️ Proctoring Incidents During Exam</h3>
+    <div id="incident-list"></div>
+  </div>
+
+  <!-- ANALYTICS -->
+  <div class="analytics-grid">
+    <div class="chart-card">
+      <div class="chart-card-title">Accuracy</div>
+      <div class="chart-card-sub">Correct vs. Incorrect answers</div>
+      <div style="height: 180px;"><canvas id="accuracy-chart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-title">Speed Analysis</div>
+      <div class="chart-card-sub">Time per question (seconds)</div>
+      <div style="height: 180px;"><canvas id="speed-chart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-title">Topic Performance</div>
+      <div class="chart-card-sub">Score breakdown by topic</div>
+      <div style="height: 180px;"><canvas id="topic-chart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- CONSISTENCY CHART -->
+  <div style="background: var(--surface); border-radius: var(--radius-xl); padding: var(--space-6); border: 1px solid var(--border-light); box-shadow: var(--shadow-sm); margin-bottom: var(--space-6);">
+    <h3 style="font-size: 16px; font-weight: 700; color: var(--primary); margin-bottom: var(--space-2);">📈 Accuracy · Speed · Consistency</h3>
+    <p style="font-size: 13px; color: var(--text-muted); margin-bottom: var(--space-5);">Historical performance across your last 7 exams</p>
+    <div style="height: 220px;"><canvas id="consistency-chart"></canvas></div>
+  </div>
+
+  <!-- ANSWER ANALYSIS -->
+  <div class="analysis-card">
+    <h3 style="font-size: 16px; font-weight: 700; color: var(--primary); margin-bottom: var(--space-5);">📋 Answer-by-Answer Analysis</h3>
+    <div class="analysis-header">
+      <div class="ah-label">#</div>
+      <div class="ah-label">Question</div>
+      <div class="ah-label">Topic</div>
+      <div class="ah-label">Result</div>
+      <div class="ah-label">Time</div>
+    </div>
+    <div id="analysis-rows"></div>
+  </div>
+
+  <!-- AI RESUME -->
+  <div class="resume-card">
+    <div class="resume-title">🤖 AI-Generated Skill Resume</div>
+    <div class="resume-name" id="res-name">Alexander Chen</div>
+    <div class="resume-role" id="res-role">Software Engineering Candidate · Deep Tech Academy</div>
+    <div class="resume-skills" id="res-skills"></div>
+    <div class="resume-summary" id="res-summary"></div>
+    <div class="resume-actions">
+      <button class="resume-dl-btn" onclick="downloadResume()">⬇ Download PDF Resume</button>
+      <button class="resume-dl-btn" onclick="shareResume()">🔗 Share Profile</button>
+      <button class="resume-dl-btn" onclick="emailHOD()">📧 Email to HOD</button>
+    </div>
+  </div>
+
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+// Load result
+const result = JSON.parse(localStorage.getItem('as_last_result') || 'null') || {
+  examTitle: 'Advanced Algorithms Final',
+  score: 118, total: 155,
+  answers: { 1: 0, 2: 0, 4: 0, 6: 0, 9: 0 }, // some wrong
+  incidents: [{ type: 'tab_switch', count: 1 }, { type: 'gaze_away' }],
+  snapshots: 12, timestamp: Date.now() - 7200000
+};
+
+const EXAM_QUESTIONS = [
+  { id: 1, type: 'mcq', points: 10, title: 'OSI Model Transport Layer', topic: 'Networking', correct: 0 },
+  { id: 2, type: 'mcq', points: 10, title: 'Binary Search Tree Property', topic: 'Data Structures', correct: 0 },
+  { id: 3, type: 'coding', points: 20, title: 'Optimizing Neural Network Pathfinding', topic: 'Algorithms' },
+  { id: 4, type: 'mcq', points: 10, title: 'Time Complexity of QuickSort', topic: 'Algorithms', correct: 0 },
+  { id: 5, type: 'coding', points: 25, title: 'Implement LRU Cache', topic: 'Data Structures' },
+  { id: 6, type: 'mcq', points: 10, title: 'Database Normalization', topic: 'Databases', correct: 0 },
+  { id: 7, type: 'mcq', points: 10, title: 'TCP vs UDP', topic: 'Networking', correct: 0 },
+  { id: 8, type: 'coding', points: 20, title: 'Graph Cycle Detection', topic: 'Graph Theory' },
+  { id: 9, type: 'mcq', points: 10, title: 'ACID Properties', topic: 'Databases', correct: 0 },
+  { id: 10, type: 'mcq', points: 10, title: 'Big-O Notation', topic: 'Algorithm Analysis', correct: 0 }
+];
+
+const QUESTIONS = EXAM_QUESTIONS.map(q => {
+  let isCorrect = false;
+  let isAttempted = false;
+  if (q.type === 'mcq') {
+    isAttempted = result.answers && typeof result.answers[q.id] !== 'undefined';
+    isCorrect = isAttempted && (result.answers[q.id] === q.correct);
+  } else if (q.type === 'coding') {
+    isAttempted = result.answers && !!result.answers[`code_${q.id}`];
+    isCorrect = isAttempted;
+  }
+  return { title: q.title, topic: q.topic, time: Math.floor(Math.random() * 60) + 30, correct: isCorrect, attempted: isAttempted };
+});
+
+const correct = QUESTIONS.filter(q => q.correct).length;
+const total   = QUESTIONS.length;
+const wrong   = total - correct;
+const pct     = result.total ? Math.round((result.score / result.total) * 100) : 0;
+const grade   = pct >= 90 ? 'A+' : pct >= 80 ? 'A' : pct >= 70 ? 'B' : pct >= 60 ? 'C' : 'F';
+const date    = new Date(result.timestamp || Date.now());
+
+// Fill hero
+document.getElementById('r-exam-name').textContent   = result.examTitle || 'Advanced Algorithms Final';
+document.getElementById('r-pct').textContent          = pct + '%';
+document.getElementById('r-score-frac').textContent   = `${result.score}/${result.total}`;
+document.getElementById('r-grade-badge').textContent  = `Grade ${grade}`;
+document.getElementById('r-date').textContent         = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+document.getElementById('r-time').textContent         = '1h 38m';
+document.getElementById('r-correct').textContent      = `${correct} questions`;
+document.getElementById('r-wrong').textContent        = `${wrong} questions`;
+document.getElementById('r-accuracy').textContent     = pct + '%';
+
+// Incidents
+const incidents = result.incidents || [];
+if (incidents.length > 0) {
+  document.getElementById('incident-summary').style.display = 'block';
+  const tabSwitches = incidents.filter(i => i.type === 'tab_switch').length;
+  const gazeAway    = incidents.filter(i => i.type === 'gaze_away').length;
+  const ipChange    = incidents.filter(i => i.type === 'ip_change').length;
+  let html = '';
+  if (tabSwitches) html += `<div class="incident-row"><span class="incident-icon">🔄</span><span class="incident-text">Tab switch violations:</span><span class="incident-count">&nbsp;${tabSwitches}</span></div>`;
+  if (gazeAway)    html += `<div class="incident-row"><span class="incident-icon">👁️</span><span class="incident-text">Gaze away detections:</span><span class="incident-count">&nbsp;${gazeAway}</span></div>`;
+  if (ipChange)    html += `<div class="incident-row"><span class="incident-icon">🌐</span><span class="incident-text">IP address changes:</span><span class="incident-count">&nbsp;${ipChange}</span></div>`;
+  document.getElementById('incident-list').innerHTML = html;
+}
+
+// QUESTIONS array is populated above dynamically
+
+// Accuracy donut
+new Chart(document.getElementById('accuracy-chart').getContext('2d'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Correct', 'Incorrect'],
+    datasets: [{ data: [QUESTIONS.filter(q=>q.correct).length, QUESTIONS.filter(q=>!q.correct).length],
+      backgroundColor: ['rgba(16,185,129,0.85)','rgba(239,68,68,0.85)'], borderWidth: 0 }]
+  },
+  options: { responsive: true, maintainAspectRatio: false, cutout: '70%',
+    plugins: { legend: { position: 'bottom', labels: { font: { size: 12 } } } } }
+});
+
+// Speed chart
+new Chart(document.getElementById('speed-chart').getContext('2d'), {
+  type: 'bar',
+  data: {
+    labels: QUESTIONS.map((q,i) => `Q${i+1}`),
+    datasets: [{ label: 'Time (s)', data: QUESTIONS.map(q => q.time),
+      backgroundColor: QUESTIONS.map(q => q.time > 600 ? 'rgba(245,158,11,0.8)' : 'rgba(74,95,191,0.8)'),
+      borderRadius: 4 }]
+  },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+    scales: { y: { title: { display: true, text: 'Seconds' }, grid: { color: 'rgba(0,0,0,0.04)' } }, x: { grid: { display: false } } } }
+});
+
+// Topic chart
+const topicMap = {};
+QUESTIONS.forEach(q => {
+  if (!topicMap[q.topic]) topicMap[q.topic] = { c: 0, t: 0 };
+  topicMap[q.topic].t++;
+  if (q.correct) topicMap[q.topic].c++;
+});
+new Chart(document.getElementById('topic-chart').getContext('2d'), {
+  type: 'radar',
+  data: {
+    labels: Object.keys(topicMap),
+    datasets: [{ label: '% Score',
+      data: Object.values(topicMap).map(v => Math.round((v.c/v.t)*100)),
+      backgroundColor: 'rgba(74,95,191,0.15)', borderColor: 'rgba(74,95,191,0.9)', borderWidth: 2,
+      pointBackgroundColor: 'rgba(74,95,191,1)' }]
+  },
+  options: { responsive: true, maintainAspectRatio: false,
+    scales: { r: { min: 0, max: 100, ticks: { stepSize: 25, font: { size: 10 } } } },
+    plugins: { legend: { display: false } } }
+});
+
+// Consistency chart
+new Chart(document.getElementById('consistency-chart').getContext('2d'), {
+  type: 'line',
+  data: {
+    labels: ['Exam 1','Exam 2','Exam 3','Exam 4','Exam 5','Exam 6','This Exam'],
+    datasets: [
+      { label: 'Accuracy', data: [72,78,80,85,88,86,pct], borderColor: '#4A5FBF', backgroundColor: 'rgba(74,95,191,0.1)', tension: 0.4, fill: true },
+      { label: 'Speed Score', data: [60,65,70,72,80,79,82], borderColor: '#10B981', backgroundColor: 'rgba(16,185,129,0.08)', tension: 0.4, fill: false },
+      { label: 'Consistency', data: [55,62,70,78,82,88,92], borderColor: '#F59E0B', backgroundColor: 'transparent', tension: 0.4, borderDash: [5,5] }
+    ]
+  },
+  options: { responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'bottom', labels: { font: { size: 12 }, usePointStyle: true } } },
+    scales: { y: { min: 0, max: 100, ticks: { callback: v => v+'%' }, grid: { color: 'rgba(0,0,0,0.04)' } }, x: { grid: { display: false } } } }
+});
+
+// Answer analysis rows
+document.getElementById('analysis-rows').innerHTML = QUESTIONS.map((q,i) => `
+  <div class="analysis-row">
+    <div class="analysis-q-num">${i+1}</div>
+    <div>
+      <div class="analysis-q-title">${q.title}</div>
+    </div>
+    <div><span class="badge badge-muted">${q.topic}</span></div>
+    <div><span class="result-chip ${!q.attempted ? 'partial' : (q.correct ? 'correct' : 'wrong')}">${!q.attempted ? '➖ Skipped' : (q.correct ? '✓ Correct' : '✕ Wrong')}</span></div>
+    <div class="time-taken">${q.time >= 60 ? Math.floor(q.time/60)+'m '+q.time%60+'s' : q.time+'s'}</div>
+  </div>`).join('');
+
+// AI Resume
+const user    = JSON.parse(localStorage.getItem('as_user') || '{}');
+const name    = user.name || 'Alexander Chen';
+const topSkills  = QUESTIONS.filter(q=>q.correct).map(q=>q.topic);
+const uniqueSkills = [...new Set(topSkills)];
+
+document.getElementById('res-name').textContent = name;
+document.getElementById('res-skills').innerHTML = uniqueSkills.map(s => {
+  const score = topicMap[s] ? Math.round((topicMap[s].c / topicMap[s].t) * 100) : 70;
+  const level = score >= 90 ? 'Expert' : score >= 70 ? 'Proficient' : 'Intermediate';
+  return `<div class="resume-skill">${s}<span class="sl">${level}</span></div>`;
+}).join('');
+
+document.getElementById('res-summary').textContent =
+  `${name} has demonstrated ${grade}-level proficiency in advanced computer science concepts, achieving ${pct}% in their ${result.examTitle || 'examination'}. ` +
+  `Strong performance in ${uniqueSkills.slice(0,2).join(' and ')}, with consistent accuracy across ${Math.round(QUESTIONS.filter(q=>q.correct).length / QUESTIONS.length * 100)}% of assessed topics. ` +
+  `Recommended for intermediate-to-advanced software engineering roles with specialization in algorithm design and data structures.`;
+
+// Functions
+function downloadResume() { showToast('Downloading AI Resume PDF...', 'success'); }
+function shareResume()    { navigator.clipboard?.writeText(window.location.href); showToast('Profile link copied!', 'success'); }
+function downloadReport() { showToast('Downloading full exam report...', 'success'); }
+function emailHOD() {
+  showToast('📧 Result emailed to HOD successfully', 'success');
+  // In production: POST /api/email/hod with result data
+}
+
+function showToast(msg, type='') {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = `toast toast-${type}`;
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+</script>
+</body>
+</html>

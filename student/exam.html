@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Live Exam — Academic Sanctuary</title>
+  <link rel="stylesheet" href="../css/globals.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <style>
+    html, body { height: 100%; overflow: hidden; user-select: none; }
+    body { background: var(--bg); display: flex; flex-direction: column; }
+
+    /* ─── EXAM HEADER ─── */
+    .exam-header { height: 52px; background: var(--surface); border-bottom: 1px solid var(--border-light); display: flex; align-items: center; justify-content: space-between; padding: 0 var(--space-5); flex-shrink: 0; box-shadow: var(--shadow-xs); position: relative; z-index: 10; }
+    .header-left  { display: flex; align-items: center; gap: var(--space-3); }
+    .header-exam-title { font-size: 13px; font-weight: 500; color: var(--text-secondary); }
+    .header-exam-name  { font-size: 14px; font-weight: 700; color: var(--primary); }
+    .header-center { display: flex; align-items: center; gap: var(--space-3); }
+    .header-right  { display: flex; align-items: center; gap: var(--space-4); }
+    .candidate-info { text-align: right; }
+    .candidate-label { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); }
+    .candidate-id    { font-size: 13px; font-weight: 700; color: var(--primary); }
+
+    /* ─── BODY LAYOUT ─── */
+    .exam-body { display: flex; flex: 1; overflow: hidden; }
+
+    /* ─── QUESTION PANEL ─── */
+    .question-panel { width: 300px; flex-shrink: 0; border-right: 1px solid var(--border-light); background: var(--surface); display: flex; flex-direction: column; overflow-y: auto; }
+    .q-panel-header { padding: var(--space-5); border-bottom: 1px solid var(--border-light); }
+    .q-badge { display: inline-flex; align-items: center; gap: 8px; }
+    .q-number { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); background: var(--accent-soft); padding: 4px 12px; border-radius: var(--radius-full); }
+    .q-points { font-size: 12px; font-weight: 600; color: var(--text-muted); }
+    .q-title  { font-size: 18px; font-weight: 700; color: var(--primary); margin-top: var(--space-3); line-height: 1.3; }
+    .q-desc   { font-size: 13px; color: var(--text-secondary); margin-top: var(--space-3); line-height: 1.7; }
+    .q-image-wrap { margin-top: var(--space-4); border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--border-light); }
+    .q-image-wrap img { width: 100%; object-fit: cover; }
+    .constraints-section { padding: var(--space-4) var(--space-5); border-top: 1px solid var(--border-light); }
+    .constraints-title { font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); margin-bottom: var(--space-3); }
+    .constraint-item { display: flex; align-items: flex-start; gap: var(--space-2); font-size: 12px; color: var(--text-secondary); margin-bottom: var(--space-2); }
+    .constraint-dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+    .input-format { padding: var(--space-4) var(--space-5); border-top: 1px solid var(--border-light); }
+    .if-label { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin-bottom: var(--space-3); }
+    .if-box { background: var(--bg); border-left: 3px solid var(--accent); padding: var(--space-3) var(--space-4); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: 12px; font-family: var(--font-mono); color: var(--text-secondary); line-height: 1.8; }
+
+    /* MCQ options */
+    .mcq-options { padding: var(--space-5); display: flex; flex-direction: column; gap: var(--space-3); }
+    .mcq-option { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); border: 1.5px solid var(--border); border-radius: var(--radius); cursor: pointer; transition: var(--transition-fast); }
+    .mcq-option:hover { border-color: var(--accent); background: var(--accent-soft); }
+    .mcq-option.selected { border-color: var(--primary); background: var(--primary-soft); }
+    .mcq-radio { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--border); flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: var(--transition-fast); }
+    .mcq-option.selected .mcq-radio { background: var(--primary); border-color: var(--primary); }
+    .mcq-option.selected .mcq-radio::after { content: ''; width: 6px; height: 6px; background: #fff; border-radius: 50%; }
+    .mcq-text { font-size: 13px; color: var(--text); }
+
+    /* ─── CENTER AREA (IDE / MCQ main) ─── */
+    .center-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+    /* IDE layout */
+    .ide-container { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .ide-topbar { height: 44px; background: var(--dark-surface); border-bottom: 1px solid var(--dark-border); display: flex; align-items: center; justify-content: space-between; padding: 0 var(--space-4); flex-shrink: 0; }
+    .ide-lang-select { background: var(--dark-bg); color: var(--dark-text); border: 1px solid var(--dark-border); border-radius: var(--radius-sm); padding: 5px 10px; font-size: 12px; font-family: var(--font-mono); cursor: pointer; }
+    .ide-filename { font-size: 12px; color: var(--dark-muted); font-family: var(--font-mono); }
+    .ide-run-btn { padding: 7px 18px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius-sm); font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: var(--transition-fast); }
+    .ide-run-btn:hover { background: var(--accent-light); }
+    .ide-run-btn.running { background: var(--warning); animation: pulse 1s infinite; }
+
+    .ide-editor-wrap { flex: 1; display: flex; overflow: hidden; background: var(--dark-bg); }
+    .line-numbers { width: 48px; background: var(--dark-surface); color: var(--dark-muted); font-family: var(--font-mono); font-size: 13px; line-height: 1.7; padding: var(--space-4) 0; text-align: right; padding-right: 12px; border-right: 1px solid var(--dark-border); user-select: none; overflow: hidden; flex-shrink: 0; }
+    .code-area { flex: 1; background: var(--dark-bg); color: var(--dark-text); border: none; padding: var(--space-4); font-family: var(--font-mono); font-size: 13px; line-height: 1.7; resize: none; tab-size: 4; }
+    .code-area:focus { outline: none; }
+
+    .terminal-panel { height: 180px; flex-shrink: 0; background: var(--dark-surface); border-top: 1px solid var(--dark-border); display: flex; flex-direction: column; }
+    .terminal-header { padding: 6px 14px; background: var(--dark-bg); border-bottom: 1px solid var(--dark-border); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--dark-muted); display: flex; align-items: center; gap: var(--space-2); }
+    .terminal-body { flex: 1; overflow-y: auto; padding: var(--space-3) var(--space-4); font-family: var(--font-mono); font-size: 12px; }
+    .t-line { line-height: 1.7; }
+    .t-success { color: var(--code-green); }
+    .t-error   { color: var(--code-red); }
+    .t-warn    { color: var(--code-orange); }
+    .t-info    { color: var(--code-blue); }
+    .t-muted   { color: var(--dark-muted); }
+
+    /* MCQ center view */
+    .mcq-center { flex: 1; display: flex; align-items: center; justify-content: center; background: var(--bg); padding: var(--space-8); }
+    .mcq-center-inner { max-width: 500px; width: 100%; text-align: center; }
+    .mcq-big-title { font-size: 22px; font-weight: 700; color: var(--primary); margin-bottom: var(--space-4); }
+    .mcq-big-desc  { font-size: 14px; color: var(--text-secondary); margin-bottom: var(--space-6); line-height: 1.7; }
+    .mcq-center-options { display: flex; flex-direction: column; gap: var(--space-3); text-align: left; }
+
+    /* ─── PROCTOR PANEL ─── */
+    .proctor-panel { width: 260px; flex-shrink: 0; background: var(--surface); border-left: 1px solid var(--border-light); display: flex; flex-direction: column; overflow-y: auto; }
+    .pp-section { padding: var(--space-4) var(--space-4); border-bottom: 1px solid var(--border-light); }
+    .pp-title { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: var(--space-3); }
+    .pp-cam { border-radius: var(--radius); overflow: hidden; background: var(--dark-bg); position: relative; aspect-ratio: 4/3; }
+    .pp-cam video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+    .cam-badge { position: absolute; top: 6px; right: 6px; font-size: 10px; }
+    .cam-overlay-status { position: absolute; bottom: 6px; left: 8px; font-size: 10px; font-family: var(--font-mono); color: rgba(255,255,255,0.7); }
+    .pp-stat-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-2); }
+    .pp-stat-key { font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
+    .pp-stat-val { font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 4px; }
+    .pp-stat-val.ok   { color: var(--success); }
+    .pp-stat-val.warn { color: var(--warning); }
+    .pp-stat-val.bad  { color: var(--danger); }
+    .tab-warning { background: var(--warning-soft); border-left: 3px solid var(--warning); padding: 8px 12px; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: 12px; color: #B45309; font-weight: 600; margin-top: var(--space-2); display: none; }
+    .tab-warning.show { display: block; }
+
+    /* Q nav */
+    .q-nav-section { padding: var(--space-4); }
+    .q-nav-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-3); }
+    .q-nav-label { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); }
+    .q-nav-count { font-size: 12px; font-weight: 600; color: var(--accent); }
+    .q-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
+    .q-btn { width: 34px; height: 34px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: var(--transition-fast); border: 1.5px solid var(--border); background: var(--surface); color: var(--text-muted); }
+    .q-btn.done    { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .q-btn.current { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+    .q-btn.flagged { background: var(--warning-soft); border-color: var(--warning); color: #B45309; }
+    .q-btn:hover   { border-color: var(--accent); }
+
+    .q-legend { display: flex; flex-direction: column; gap: 6px; margin-top: var(--space-4); }
+    .legend-row { display: flex; align-items: center; gap: var(--space-2); font-size: 11px; color: var(--text-muted); }
+    .legend-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+    .legend-dot.done    { background: var(--primary); }
+    .legend-dot.current { border: 1.5px solid var(--accent); background: transparent; }
+    .legend-dot.empty   { background: var(--bg-alt); border: 1.5px solid var(--border); }
+
+    /* Actions bottom */
+    .pp-actions { padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-3); margin-top: auto; }
+
+    /* ─── ANTI-CHEAT OVERLAY ─── */
+    .warning-overlay {
+      position: fixed; inset: 0; z-index: 999;
+      background: rgba(239,68,68,0.94); backdrop-filter: blur(8px);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      color: #fff; text-align: center; padding: var(--space-8);
+      display: none;
+    }
+    .warning-overlay.show { display: flex; animation: fadeIn 0.2s both; }
+    .warning-count { font-size: 80px; font-weight: 900; line-height: 1; }
+    .warning-title { font-size: 32px; font-weight: 800; margin: var(--space-4) 0 var(--space-2); }
+    .warning-sub   { font-size: 16px; opacity: 0.85; max-width: 450px; }
+
+    /* Fullscreen prompt */
+    .fs-prompt { position: fixed; inset: 0; z-index: 1000; background: var(--primary); display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; text-align: center; gap: var(--space-6); }
+    .fs-prompt.hidden { display: none; }
+  </style>
+</head>
+<body>
+
+<!-- ─── START UP PROMPT ─── -->
+<div class="fs-prompt" id="exam-start-overlay">
+  <div style="font-size: 64px;">🛡️</div>
+  <div>
+    <h2 style="font-size: 28px; font-weight: 800; margin-bottom: var(--space-3);">System & Security Check</h2>
+    <p style="font-size: 15px; opacity: 0.8; max-width: 360px; margin: 0 auto;">To begin the exam, you must grant camera access for AI proctoring and enter fullscreen mode.</p>
+  </div>
+  <button class="btn" id="btn-start-exam" style="background:#fff; color: var(--primary); font-weight: 700; padding: 14px 40px; font-size: 15px; margin-top: 20px;" onclick="initiateExamFlow()">Grant Permissions & Go Fullscreen</button>
+</div>
+
+<!-- ─── TAB SWITCH WARNING ─── -->
+<div class="warning-overlay" id="tab-warning-overlay">
+  <div class="warning-count" id="strikes-left">⚠️</div>
+  <div class="warning-title" id="warning-title">Tab Switch Detected!</div>
+  <p class="warning-sub" id="warning-sub">Return to the exam. Multiple violations may result in automatic submission.</p>
+  <button class="btn" style="background:#fff; color: var(--danger); margin-top: var(--space-6); font-weight: 700; padding: 14px 40px;" onclick="dismissWarning()">Return to Exam</button>
+</div>
+
+<!-- ─── EXAM HEADER ─── -->
+<header class="exam-header">
+  <div class="header-left">
+    <span style="font-size: 15px; font-weight: 700; color: var(--primary);">Academic Sanctuary</span>
+    <span style="color: var(--border); font-size: 18px;">|</span>
+    <span class="header-exam-name" id="exam-title">Advanced Algorithms Final</span>
+  </div>
+  <div class="header-center">
+    <div class="exam-timer" id="exam-timer">🔴 01:42:58</div>
+  </div>
+  <div class="header-right">
+    <div class="candidate-info">
+      <div class="candidate-label">Candidate</div>
+      <div class="candidate-id" id="candidate-id">STU-88294</div>
+    </div>
+    <div style="width: 36px; height: 36px; border-radius: 50%; background: var(--bg-alt); display: flex; align-items: center; justify-content: center; font-size: 18px;">👤</div>
+  </div>
+</header>
+
+<!-- ─── EXAM BODY ─── -->
+<div class="exam-body">
+
+  <!-- QUESTION PANEL -->
+  <div class="question-panel" id="question-panel">
+    <div class="q-panel-header">
+      <div class="q-badge">
+        <span class="q-number" id="q-number-label">QUESTION 1</span>
+        <span class="q-points" id="q-points-label">10 Points</span>
+      </div>
+      <h2 class="q-title" id="q-title">Loading...</h2>
+      <p class="q-desc"  id="q-desc">Loading question...</p>
+      <div class="q-image-wrap" id="q-image-wrap" style="display:none;">
+        <img id="q-image" src="" alt="" />
+      </div>
+    </div>
+    <div id="q-extra"></div>
+  </div>
+
+  <!-- CENTER AREA -->
+  <div class="center-area" id="center-area">
+    <!-- Filled dynamically -->
+  </div>
+
+  <!-- PROCTOR PANEL -->
+  <div class="proctor-panel">
+    <div class="pp-section">
+      <div class="pp-title">Proctor Status <span class="badge badge-success" style="font-size:10px; margin-left: 6px;">SECURE</span></div>
+      <div class="pp-cam">
+        <video id="proctor-cam" autoplay playsinline muted></video>
+        <span class="cam-badge"><span class="badge" style="background:rgba(0,0,0,0.6); color: rgba(255,255,255,0.7); font-size:9px;">CAM_01</span></span>
+        <span class="cam-overlay-status" id="cam-status">Live Recording...</span>
+      </div>
+    </div>
+    <div class="pp-section">
+      <div class="pp-stat-row">
+        <span class="pp-stat-key">👁 Gaze</span>
+        <span class="pp-stat-val ok" id="gaze-status">● Active</span>
+      </div>
+      <div class="pp-stat-row">
+        <span class="pp-stat-key">📶 Network</span>
+        <span class="pp-stat-val ok" id="net-status">● Stable</span>
+      </div>
+      <div class="pp-stat-row">
+        <span class="pp-stat-key">⚠️ Tab Switches</span>
+        <span class="pp-stat-val" id="tab-switch-count" style="color:var(--text-secondary);">0/3</span>
+      </div>
+      <div class="tab-warning" id="tab-warn-box"></div>
+    </div>
+
+    <!-- Q Navigation -->
+    <div class="q-nav-section">
+      <div class="q-nav-header">
+        <span class="q-nav-label">Navigation</span>
+        <span class="q-nav-count" id="q-nav-count">0 of 10 Completed</span>
+      </div>
+      <div class="q-grid" id="q-grid"></div>
+      <div class="q-legend">
+        <div class="legend-row"><div class="legend-dot done"></div> Completed</div>
+        <div class="legend-row"><div class="legend-dot current"></div> Current</div>
+        <div class="legend-row"><div class="legend-dot empty"></div> Not Visited</div>
+      </div>
+    </div>
+
+    <div class="pp-actions">
+      <button class="btn btn-ghost w-full" style="justify-content:center; font-size:13px;" onclick="flagQuestion()" id="flag-btn">🚩 Flag Question</button>
+      <button class="btn btn-primary w-full" style="justify-content:center; font-size:13px;" onclick="finishExam()" id="finish-btn">Finish Examination</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<!-- Finish Modal -->
+<div class="modal-overlay hidden" id="finish-modal">
+  <div class="modal-box" style="text-align:center;">
+    <div style="font-size: 48px; margin-bottom: var(--space-4);">📋</div>
+    <h2 style="font-size: 22px; font-weight: 800; color: var(--primary); margin-bottom: var(--space-3);">Submit Examination?</h2>
+    <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: var(--space-6);">You have answered <strong id="answered-count">0</strong> of <strong id="total-count">10</strong> questions. This action cannot be undone.</p>
+    <div style="display: flex; gap: var(--space-3);">
+      <button class="btn btn-ghost flex-1" onclick="document.getElementById('finish-modal').classList.add('hidden')">Continue Exam</button>
+      <button class="btn btn-primary flex-1" onclick="submitExam()">Submit Now</button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/exam-engine.js"></script>
+</body>
+</html>

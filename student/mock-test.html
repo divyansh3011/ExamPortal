@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mock Test — Academic Sanctuary</title>
+  <link rel="stylesheet" href="../css/globals.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { background: var(--bg); min-height: 100vh; }
+    .page-header { background: var(--surface); border-bottom: 1px solid var(--border-light); padding: 0 var(--space-8); height: 60px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
+    .ph-left { display: flex; align-items: center; gap: var(--space-4); }
+    .ph-right { display: flex; align-items: center; gap: var(--space-4); }
+
+    /* ─── LANDING ─── */
+    #mock-landing { padding: var(--space-10) var(--space-8); max-width: 1100px; margin: 0 auto; }
+    .mock-hero { text-align: center; margin-bottom: var(--space-10); }
+    .mock-hero h1 { font-size: 38px; font-weight: 900; color: var(--primary); letter-spacing: -0.03em; margin-bottom: var(--space-4); }
+    .mock-hero p  { font-size: 16px; color: var(--text-secondary); max-width: 480px; margin: 0 auto; }
+
+    .mock-cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--space-5); margin-bottom: var(--space-8); }
+    .mock-card { background: var(--surface); border-radius: var(--radius-xl); border: 1px solid var(--border-light); box-shadow: var(--shadow-sm); overflow: hidden; transition: var(--transition); cursor: pointer; }
+    .mock-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+    .mock-card-top { height: 8px; }
+    .mock-card-body { padding: var(--space-6); }
+    .mock-card-icon { font-size: 32px; margin-bottom: var(--space-3); }
+    .mock-card-title { font-size: 18px; font-weight: 700; color: var(--primary); margin-bottom: var(--space-2); }
+    .mock-card-desc  { font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin-bottom: var(--space-4); }
+    .mock-card-meta  { display: flex; align-items: center; justify-content: space-between; }
+    .mock-card-stats { display: flex; gap: var(--space-3); }
+    .mock-stat { text-align: center; }
+    .mock-stat-val   { font-size: 18px; font-weight: 800; color: var(--primary); }
+    .mock-stat-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); }
+    .mock-streak-strip { background: linear-gradient(135deg, #FF6B35, #FF8C42); border-radius: var(--radius-lg); padding: var(--space-5); color: #fff; display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-6); }
+    .mss-left h3 { font-size: 20px; font-weight: 800; }
+    .mss-left p  { font-size: 13px; opacity: 0.85; margin-top: 4px; }
+    .mss-right { font-size: 48px; animation: streakBounce 1s ease-in-out infinite; }
+
+    /* ─── BUZZER MODE ─── */
+    .buzzer-mode-card { background: linear-gradient(135deg, var(--primary), var(--accent)); border-radius: var(--radius-xl); padding: var(--space-8); color: #fff; display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-6); }
+    .bmc-text h2 { font-size: 22px; font-weight: 800; margin-bottom: var(--space-2); }
+    .bmc-text p  { font-size: 14px; opacity: 0.8; max-width: 360px; }
+    .buzzer-mini { width: 80px; height: 80px; border-radius: 50%; background: rgba(255,255,255,0.15); border: 3px solid rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center; font-size: 36px; cursor: pointer; transition: var(--transition); animation: ringPulse 2s infinite; }
+    .buzzer-mini:hover { background: rgba(255,255,255,0.25); transform: scale(1.1); }
+
+    /* ─── MOCK TEST INTERFACE ─── */
+    #mock-exam { display: none; max-width: 900px; margin: 0 auto; padding: var(--space-6) var(--space-8); }
+    .mt-progress-bar { width: 100%; height: 6px; background: var(--bg-alt); border-radius: 3px; margin-bottom: var(--space-6); overflow: hidden; }
+    .mt-progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--primary)); border-radius: 3px; transition: width 0.4s var(--ease); }
+    .mt-question-card { background: var(--surface); border-radius: var(--radius-xl); padding: var(--space-8); border: 1px solid var(--border-light); box-shadow: var(--shadow-sm); margin-bottom: var(--space-5); }
+    .mt-q-meta { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin-bottom: var(--space-3); }
+    .mt-q-title { font-size: 22px; font-weight: 700; color: var(--primary); margin-bottom: var(--space-5); line-height: 1.3; }
+    .mt-options  { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+    .mt-option {
+      padding: var(--space-4) var(--space-5); border-radius: var(--radius-md);
+      border: 1.5px solid var(--border); background: var(--surface);
+      cursor: pointer; transition: var(--transition-fast); font-size: 14px;
+      display: flex; align-items: center; gap: var(--space-3);
+    }
+    .mt-option:hover { border-color: var(--accent); background: var(--accent-soft); }
+    .mt-option.selected { border-color: var(--primary); background: var(--primary-soft); }
+    .mt-option.correct  { border-color: var(--success); background: var(--success-soft); }
+    .mt-option.wrong    { border-color: var(--danger);  background: var(--danger-soft); }
+    .mt-option .opt-letter { width: 28px; height: 28px; border-radius: 50%; background: var(--bg-alt); font-weight: 700; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .mt-option.correct .opt-letter { background: var(--success); color: #fff; }
+    .mt-option.wrong   .opt-letter { background: var(--danger);  color: #fff; }
+    .mt-option.selected .opt-letter { background: var(--primary); color: #fff; }
+
+    .mt-nav { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+    .mt-timer-mini { font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--primary); background: var(--primary-soft); padding: 8px 16px; border-radius: var(--radius-full); }
+    .mt-timer-mini.warning { color: var(--danger); background: var(--danger-soft); animation: timerWarn 1s infinite; }
+
+    /* ─── RESULTS PANEL ─── */
+    #mock-results { display: none; max-width: 900px; margin: 0 auto; padding: var(--space-6) var(--space-8); }
+    .result-hero { text-align: center; padding: var(--space-8); background: var(--surface); border-radius: var(--radius-xl); border: 1px solid var(--border-light); margin-bottom: var(--space-6); }
+    .result-score-circle { width: 120px; height: 120px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--primary)); display: flex; align-items: center; justify-content: center; margin: 0 auto var(--space-5); }
+    .rsc-val { font-size: 32px; font-weight: 900; color: #fff; }
+    .result-topic-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); margin-bottom: var(--space-6); }
+    .topic-card { background: var(--surface); border-radius: var(--radius-lg); padding: var(--space-5); border: 1px solid var(--border-light); }
+    .topic-name  { font-size: 14px; font-weight: 600; color: var(--primary); margin-bottom: var(--space-2); }
+    .topic-score { font-size: 12px; color: var(--text-muted); margin-bottom: var(--space-3); }
+    .topic-bar   { height: 6px; background: var(--bg-alt); border-radius: 3px; overflow: hidden; }
+    .topic-fill  { height: 100%; border-radius: 3px; transition: width 0.8s var(--ease); }
+    .topic-fill.good { background: var(--success); }
+    .topic-fill.ok   { background: var(--warning); }
+    .topic-fill.weak { background: var(--danger);  }
+  </style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="ph-left">
+    <a href="dashboard.html" style="font-size:13px; color: var(--text-muted);">← Dashboard</a>
+    <span style="color: var(--border);">|</span>
+    <span style="font-size: 15px; font-weight: 700; color: var(--primary);">Mock Test Center</span>
+  </div>
+  <div class="ph-right">
+    <div class="streak-badge"><span class="fire">🔥</span><span id="streak-display">12</span> day streak</div>
+    <div id="mt-timer-display" style="display:none;" class="mt-timer-mini">10:00</div>
+  </div>
+</header>
+
+<!-- ─── LANDING ─── -->
+<div id="mock-landing" class="animate-fadeIn">
+  <!-- Streak strip -->
+  <div class="mock-streak-strip">
+    <div class="mss-left">
+      <h3 id="landing-streak">🔥 12 Day Streak!</h3>
+      <p>Keep practicing daily to maintain your streak and earn bonus XP.</p>
+    </div>
+    <div class="mss-right">🔥</div>
+  </div>
+
+  <!-- Buzzer mode banner -->
+  <div class="buzzer-mode-card">
+    <div class="bmc-text">
+      <h2>⚡ Buzzer Challenge Mode</h2>
+      <p>Race against other students to answer first. First correct answer wins double XP points!</p>
+      <button class="btn" style="background:rgba(255,255,255,0.15); color:#fff; margin-top: var(--space-4); border: 1.5px solid rgba(255,255,255,0.3);" onclick="startBuzzerMode()">Join Live Buzzer Room</button>
+    </div>
+    <div class="buzzer-mini" onclick="startBuzzerMode()">⚡</div>
+  </div>
+
+  <!-- Mock test cards -->
+  <div class="mock-hero">
+    <h1>Choose Your Practice Set</h1>
+    <p>Targeted practice sessions to identify and strengthen your weak areas.</p>
+  </div>
+
+  <div class="mock-cards-grid" id="mock-cards-grid">
+    <!-- Populated by JS -->
+  </div>
+</div>
+
+<!-- ─── EXAM INTERFACE ─── -->
+<div id="mock-exam">
+  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-5);">
+    <div>
+      <h1 style="font-size: 22px; font-weight: 800; color: var(--primary);" id="mock-exam-title">Mock Test</h1>
+      <p style="font-size: 13px; color: var(--text-muted);" id="mock-exam-subtitle">10 Questions • 15 Minutes</p>
+    </div>
+    <button class="btn btn-ghost btn-sm" onclick="exitMock()">✕ Exit Mock</button>
+  </div>
+  <div class="mt-progress-bar"><div class="mt-progress-fill" id="mt-progress" style="width: 0%;"></div></div>
+  <div class="mt-question-card">
+    <div class="mt-q-meta" id="mt-q-meta">QUESTION 1 of 10 • Topic</div>
+    <h2 class="mt-q-title" id="mt-q-title">Loading...</h2>
+    <div class="mt-options" id="mt-options"></div>
+    <div id="mt-explanation" style="display:none; margin-top: var(--space-5); padding: var(--space-4); background: var(--success-soft); border-radius: var(--radius); border-left: 3px solid var(--success); font-size: 13px; color: var(--text-secondary); line-height: 1.7;"></div>
+  </div>
+  <div class="mt-nav">
+    <button class="btn btn-ghost" onclick="exitMock()">← Exit</button>
+    <div style="font-size: 13px; color: var(--text-muted);" id="mt-score-display"></div>
+    <button class="btn btn-primary" id="mt-next-btn" onclick="nextMockQuestion()">Next →</button>
+  </div>
+</div>
+
+<!-- ─── RESULTS ─── -->
+<div id="mock-results">
+  <div class="result-hero">
+    <div class="result-score-circle"><div class="rsc-val" id="r-score">0%</div></div>
+    <h2 style="font-size: 28px; font-weight: 800; color: var(--primary); margin-bottom: var(--space-2);" id="r-grade">Great Job!</h2>
+    <p style="font-size: 15px; color: var(--text-secondary);" id="r-summary">You answered 8/10 correctly.</p>
+    <div style="display: flex; gap: var(--space-5); justify-content: center; margin-top: var(--space-5);" id="r-stats-row"></div>
+  </div>
+
+  <h2 style="font-size: 20px; font-weight: 700; color: var(--primary); margin-bottom: var(--space-4);">📊 Topic Analysis</h2>
+  <div class="result-topic-grid" id="topic-grid"></div>
+
+  <div style="background: var(--surface); border-radius: var(--radius-xl); padding: var(--space-6); border: 1px solid var(--border-light); margin-bottom: var(--space-6);">
+    <h3 style="font-size: 16px; font-weight: 700; color: var(--primary); margin-bottom: var(--space-5);">📈 Performance Radar</h3>
+    <canvas id="radar-chart" height="300"></canvas>
+  </div>
+
+  <div style="display: flex; gap: var(--space-3);">
+    <button class="btn btn-ghost flex-1" onclick="showLanding()" style="justify-content: center;">← Back to Tests</button>
+    <button class="btn btn-primary flex-1" onclick="startMock(currentSet)" style="justify-content: center;">🔄 Retry This Set</button>
+    <a href="dashboard.html" class="btn btn-accent flex-1" style="justify-content: center;">Dashboard →</a>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+const MOCK_SETS = [
+  { id: 'ds', title: 'Data Structures', icon: '🏗️', color: '#4A5FBF', desc: 'Arrays, Trees, Graphs, Hash Maps', questions: 10, time: 15, difficulty: 'Medium' },
+  { id: 'algo', title: 'Algorithms', icon: '⚡', color: '#1E2A5E', desc: 'Sorting, Searching, Dynamic Programming', questions: 10, time: 15, difficulty: 'Hard' },
+  { id: 'networks', title: 'Computer Networks', icon: '🌐', color: '#10B981', desc: 'OSI, TCP/IP, Routing Protocols', questions: 10, time: 12, difficulty: 'Easy' },
+  { id: 'db', title: 'Databases', icon: '🗄️', color: '#F59E0B', desc: 'SQL, Normalization, Transactions', questions: 10, time: 12, difficulty: 'Medium' },
+  { id: 'os', title: 'Operating Systems', icon: '💻', color: '#EF4444', desc: 'Processes, Memory, Scheduling', questions: 8, time: 10, difficulty: 'Hard' },
+  { id: 'ml', title: 'Machine Learning', icon: '🤖', color: '#8B5CF6', desc: 'Models, Evaluation, Feature Engineering', questions: 8, time: 12, difficulty: 'Medium' }
+];
+
+const MOCK_QUESTIONS = {
+  ds: [
+    { q: 'What is the time complexity of accessing an element in a Hash Map on average?', opts: ['O(1)', 'O(n)', 'O(log n)', 'O(n²)'], ans: 0, topic: 'Data Structures', explanation: 'Hash maps provide O(1) average-case access via hash functions.' },
+    { q: 'Which data structure uses LIFO (Last In First Out) principle?', opts: ['Queue', 'Stack', 'Dequeue', 'Heap'], ans: 1, topic: 'Data Structures', explanation: 'A Stack follows LIFO — the last element pushed is the first to be popped.' },
+    { q: 'What is the height of a balanced BST with n nodes?', opts: ['O(log n)', 'O(n)', 'O(n log n)', 'O(1)'], ans: 0, topic: 'Trees', explanation: 'A balanced BST maintains O(log n) height by ensuring subtrees differ by at most 1.' },
+    { q: 'Which traversal visits nodes in sorted order for a BST?', opts: ['In-order', 'Pre-order', 'Post-order', 'BFS'], ans: 0, topic: 'Trees', explanation: 'In-order traversal (Left → Root → Right) visits BST nodes in ascending sorted order.' },
+    { q: 'What is the worst-case complexity of insertion in a min heap?', opts: ['O(log n)', 'O(n)', 'O(1)', 'O(n log n)'], ans: 0, topic: 'Heaps', explanation: 'Heap insertion requires bubbling up the element, taking O(log n) in worst case.' },
+    { q: 'Which graph representation is more space-efficient for sparse graphs?', opts: ['Adjacency List', 'Adjacency Matrix', 'Edge List', 'Incidence Matrix'], ans: 0, topic: 'Graphs', explanation: 'Adjacency list stores only existing edges, requiring O(V + E) instead of O(V²).' },
+    { q: 'A deque (double-ended queue) allows insertion and deletion from:', opts: ['Both ends', 'Front only', 'Rear only', 'Middle only'], ans: 0, topic: 'Data Structures', explanation: 'A deque supports O(1) insertion and deletion from both the front and rear.' },
+    { q: 'What is the time complexity of merge sort?', opts: ['O(n log n)', 'O(n²)', 'O(n)', 'O(log n)'], ans: 0, topic: 'Sorting', explanation: 'Merge sort divides the array in O(log n) steps and merges in O(n) each step.' },
+    { q: 'Which structure is used in BFS traversal of a graph?', opts: ['Queue', 'Stack', 'Heap', 'Deque'], ans: 0, topic: 'Graphs', explanation: 'BFS uses a queue to explore nodes level by level.' },
+    { q: 'A linked list allows O(1) insertion if you have a pointer to:', opts: ['The node before insertion point', 'The head', 'The tail', 'Any node'], ans: 0, topic: 'Data Structures', explanation: 'With a pointer to the predecessor node, insertion in a linked list is O(1).' }
+  ],
+  algo: [
+    { q: 'Which algorithm finds the shortest path in a weighted graph with no negative edges?', opts: ["Dijkstra's", "Bellman-Ford", "Floyd-Warshall", "Kruskal's"], ans: 0, topic: 'Graph Algorithms', explanation: "Dijkstra's uses a greedy approach with a min-heap and works correctly when all edge weights are non-negative." },
+    { q: 'What technique does dynamic programming primarily use to optimize recursive solutions?', opts: ['Memoization / Tabulation', 'Divide and Conquer', 'Greedy Selection', 'Backtracking'], ans: 0, topic: 'Dynamic Programming', explanation: 'DP avoids recomputing subproblems via memoization (top-down) or tabulation (bottom-up).' },
+    { q: 'Binary search requires the input array to be:', opts: ['Sorted', 'Unsorted', 'Contains unique values', 'Has even number of elements'], ans: 0, topic: 'Searching', explanation: 'Binary search relies on the sorted property to eliminate half the search space each step.' },
+    { q: 'Which sorting algorithm is stable AND in-place?', opts: ['Insertion Sort', 'Heap Sort', 'Quick Sort', 'Selection Sort'], ans: 0, topic: 'Sorting', explanation: 'Insertion sort maintains relative order of equal elements and sorts within the original array.' },
+    { q: 'Kruskal\'s algorithm builds a Minimum Spanning Tree by:', opts: ['Adding lightest safe edges', 'Processing vertices by weight', 'DFS traversal', 'BFS traversal'], ans: 0, topic: 'Graph Algorithms', explanation: "Kruskal's sorts all edges and greedily adds the smallest edge that doesn't form a cycle." },
+    { q: 'The recurrence T(n) = 2T(n/2) + O(n) solves to:', opts: ['O(n log n)', 'O(n)', 'O(n²)', 'O(log n)'], ans: 0, topic: 'Complexity Analysis', explanation: 'By Master Theorem case 2: a=2, b=2, f(n)=n, so T(n) = O(n log n).' },
+    { q: 'Which paradigm is used in the coin change problem for minimum coins?', opts: ['Dynamic Programming', 'Greedy', 'Backtracking', 'Divide & Conquer'], ans: 0, topic: 'Dynamic Programming', explanation: 'Greedy fails for some coin systems; DP guarantees optimality by considering all subproblems.' },
+    { q: 'What does amortized analysis measure?', opts: ['Average cost per operation over many operations', 'Worst-case single operation cost', 'Best-case complexity', 'Space complexity'], ans: 0, topic: 'Complexity Analysis', explanation: 'Amortized analysis gives the average cost per operation in a sequence, spreading costly operations.' },
+    { q: 'Which algorithm solves the Traveling Salesman Problem exactly?', opts: ['Dynamic Programming with bitmask', "Dijkstra's", 'Bellman-Ford', 'BFS'], ans: 0, topic: 'NP-Complete', explanation: 'The Held-Karp algorithm uses DP + bitmask to solve TSP in O(n² · 2^n).' },
+    { q: 'A topological sort is only possible on a:', opts: ['Directed Acyclic Graph (DAG)', 'Undirected Graph', 'Cyclic Directed Graph', 'Complete Graph'], ans: 0, topic: 'Graph Algorithms', explanation: 'Topological ordering requires no cycles; it is defined only for DAGs.' }
+  ]
+};
+
+// Fill other sets with generic questions
+['networks','db','os','ml'].forEach(setId => {
+  const set = MOCK_SETS.find(s => s.id === setId);
+  MOCK_QUESTIONS[setId] = Array.from({length: 8}, (_, i) => ({
+    q: `${set.title} Question ${i+1}: Sample exam question covering core concepts in ${set.title}.`,
+    opts: ['Option A (Correct)', 'Option B', 'Option C', 'Option D'],
+    ans: 0,
+    topic: set.title,
+    explanation: `This is the correct answer because it aligns with ${set.title} principles.`
+  }));
+});
+
+// Load streak
+const streak = parseInt(localStorage.getItem('as_streak') || '12');
+document.getElementById('streak-display').textContent = streak;
+document.getElementById('landing-streak').textContent = `🔥 ${streak} Day Streak!`;
+
+let currentSet = null;
+let currentIdx  = 0;
+let correctCount = 0;
+let mockAnswers  = [];
+let mockTimer    = null;
+let secondsLeft  = 900;
+let answered     = false;
+
+function buildMockCards() {
+  const grid = document.getElementById('mock-cards-grid');
+  const weakMap = JSON.parse(localStorage.getItem('as_weak_topics') || '{}');
+  grid.innerHTML = MOCK_SETS.map(s => {
+    const isWeak  = weakMap[s.id] && weakMap[s.id] < 60;
+    return `
+    <div class="mock-card" onclick="startMock('${s.id}')">
+      <div class="mock-card-top" style="background: ${s.color};"></div>
+      <div class="mock-card-body">
+        <div class="mock-card-icon">${s.icon}</div>
+        <h3 class="mock-card-title">${s.title} ${isWeak ? '<span class="badge badge-danger" style="font-size:9px;">WEAK AREA</span>' : ''}</h3>
+        <p class="mock-card-desc">${s.desc}</p>
+        <div class="mock-card-meta">
+          <div class="mock-card-stats">
+            <div class="mock-stat"><div class="mock-stat-val">${s.questions}</div><div class="mock-stat-label">Questions</div></div>
+            <div class="mock-stat"><div class="mock-stat-val">${s.time}m</div><div class="mock-stat-label">Time</div></div>
+          </div>
+          <span class="badge ${s.difficulty==='Easy'?'badge-success':s.difficulty==='Medium'?'badge-warning':'badge-danger'}">${s.difficulty}</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function startMock(setId) {
+  currentSet  = setId;
+  currentIdx  = 0;
+  correctCount = 0;
+  mockAnswers  = [];
+  answered     = false;
+  secondsLeft  = MOCK_SETS.find(s => s.id === setId).time * 60;
+
+  document.getElementById('mock-landing').style.display  = 'none';
+  document.getElementById('mock-results').style.display  = 'none';
+  document.getElementById('mock-exam').style.display     = 'block';
+  document.getElementById('mt-timer-display').style.display = 'block';
+
+  const set = MOCK_SETS.find(s => s.id === currentSet);
+  document.getElementById('mock-exam-title').textContent    = set.title + ' Mock Test';
+  document.getElementById('mock-exam-subtitle').textContent = `${set.questions} Questions • ${set.time} Minutes`;
+
+  renderMockQuestion();
+  startMockTimer();
+}
+
+function renderMockQuestion() {
+  const Qs = MOCK_QUESTIONS[currentSet];
+  const q  = Qs[currentIdx];
+  answered = false;
+
+  document.getElementById('mt-q-meta').textContent    = `QUESTION ${currentIdx+1} of ${Qs.length} • ${q.topic}`;
+  document.getElementById('mt-q-title').textContent   = q.q;
+  document.getElementById('mt-progress').style.width  = `${(currentIdx / Qs.length) * 100}%`;
+  document.getElementById('mt-explanation').style.display = 'none';
+  document.getElementById('mt-score-display').textContent = `Score: ${correctCount}/${currentIdx}`;
+  document.getElementById('mt-next-btn').textContent  = currentIdx < Qs.length - 1 ? 'Next →' : 'See Results';
+
+  const letters = ['A', 'B', 'C', 'D'];
+  document.getElementById('mt-options').innerHTML = q.opts.map((opt, i) => `
+    <div class="mt-option" id="mt-opt-${i}" onclick="selectMockOption(${i})">
+      <div class="opt-letter">${letters[i]}</div>
+      <span>${opt}</span>
+    </div>`).join('');
+}
+
+function selectMockOption(idx) {
+  if (answered) return;
+  answered = true;
+  const q = MOCK_QUESTIONS[currentSet][currentIdx];
+  mockAnswers.push({ q: currentIdx, picked: idx, correct: q.ans });
+
+  document.querySelectorAll('.mt-option').forEach((el, i) => {
+    if (i === q.ans) el.classList.add('correct');
+    else if (i === idx && idx !== q.ans) el.classList.add('wrong');
+  });
+
+  if (idx === q.ans) { correctCount++; showToast('✓ Correct!', 'success'); }
+  else               { showToast(`✕ Correct: Option ${['A','B','C','D'][q.ans]}`, 'danger'); }
+
+  document.getElementById('mt-explanation').textContent = q.explanation;
+  document.getElementById('mt-explanation').style.display = 'block';
+}
+
+function nextMockQuestion() {
+  if (!answered) { showToast('Please select an answer first', 'warning'); return; }
+  currentIdx++;
+  if (currentIdx >= MOCK_QUESTIONS[currentSet].length) { showMockResults(); return; }
+  renderMockQuestion();
+}
+
+function showMockResults() {
+  clearInterval(mockTimer);
+  document.getElementById('mock-exam').style.display    = 'none';
+  document.getElementById('mock-results').style.display = 'block';
+  document.getElementById('mt-timer-display').style.display = 'none';
+
+  const total = MOCK_QUESTIONS[currentSet].length;
+  const pct   = Math.round((correctCount / total) * 100);
+  document.getElementById('r-score').textContent   = pct + '%';
+  document.getElementById('r-summary').textContent = `You answered ${correctCount}/${total} correctly.`;
+
+  let grade = 'Excellent! 🏆';
+  if (pct < 80) grade = 'Good Work! 👍';
+  if (pct < 60) grade = 'Keep Practicing! 📚';
+  document.getElementById('r-grade').textContent = grade;
+
+  // Topic breakdown
+  const topicMap = {};
+  MOCK_QUESTIONS[currentSet].forEach((q, i) => {
+    if (!topicMap[q.topic]) topicMap[q.topic] = { correct: 0, total: 0 };
+    topicMap[q.topic].total++;
+    if (mockAnswers[i]?.picked === q.ans) topicMap[q.topic].correct++;
+  });
+
+  const grid = document.getElementById('topic-grid');
+  grid.innerHTML = Object.entries(topicMap).map(([topic, data]) => {
+    const tPct = Math.round((data.correct / data.total) * 100);
+    const cls  = tPct >= 80 ? 'good' : tPct >= 60 ? 'ok' : 'weak';
+    return `
+    <div class="topic-card">
+      <div class="topic-name">${topic} ${tPct < 60 ? '⚠️' : ''}</div>
+      <div class="topic-score">${data.correct}/${data.total} correct · ${tPct}%</div>
+      <div class="topic-bar"><div class="topic-fill ${cls}" style="width:${tPct}%;"></div></div>
+    </div>`;
+  }).join('');
+
+  // Radar chart
+  const radarCtx = document.getElementById('radar-chart').getContext('2d');
+  const topics   = Object.keys(topicMap);
+  const scores   = topics.map(t => Math.round((topicMap[t].correct / topicMap[t].total) * 100));
+  new Chart(radarCtx, {
+    type: 'radar',
+    data: {
+      labels: topics,
+      datasets: [{
+        label: 'Your Score',
+        data: scores,
+        backgroundColor: 'rgba(74,95,191,0.2)',
+        borderColor: 'rgba(74,95,191,0.8)',
+        pointBackgroundColor: 'rgba(74,95,191,1)',
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: { r: { min: 0, max: 100, ticks: { stepSize: 25 } } },
+      plugins: { legend: { display: false } }
+    }
+  });
+
+  // Save weak topics
+  const weakMap = JSON.parse(localStorage.getItem('as_weak_topics') || '{}');
+  weakMap[currentSet] = pct;
+  localStorage.setItem('as_weak_topics', JSON.stringify(weakMap));
+
+  // Update streak
+  const today = new Date().toDateString();
+  const lastPractice = localStorage.getItem('as_last_practice');
+  let newStreak = parseInt(localStorage.getItem('as_streak') || '0');
+  if (lastPractice !== today) {
+    newStreak++;
+    localStorage.setItem('as_streak', newStreak);
+    localStorage.setItem('as_last_practice', today);
+    showToast(`🔥 ${newStreak} Day Streak! +50 XP`, 'success');
+  }
+}
+
+function startMockTimer() {
+  clearInterval(mockTimer);
+  const el = document.getElementById('mt-timer-display');
+  mockTimer = setInterval(() => {
+    secondsLeft--;
+    const m = Math.floor(secondsLeft / 60).toString().padStart(2, '0');
+    const s = (secondsLeft % 60).toString().padStart(2, '0');
+    el.textContent = `${m}:${s}`;
+    if (secondsLeft <= 60) el.classList.add('warning');
+    if (secondsLeft <= 0)  { clearInterval(mockTimer); showMockResults(); }
+  }, 1000);
+}
+
+function exitMock() { clearInterval(mockTimer); showLanding(); }
+
+function showLanding() {
+  document.getElementById('mock-landing').style.display  = '';
+  document.getElementById('mock-exam').style.display     = 'none';
+  document.getElementById('mock-results').style.display  = 'none';
+  document.getElementById('mt-timer-display').style.display = 'none';
+}
+
+function startBuzzerMode() {
+  showToast('🎯 Joining live buzzer room...', 'success');
+  setTimeout(() => { window.location.href = 'study-room.html?mode=buzzer'; }, 800);
+}
+
+function showToast(msg, type = '') {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = `toast toast-${type}`;
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+
+buildMockCards();
+</script>
+</body>
+</html>

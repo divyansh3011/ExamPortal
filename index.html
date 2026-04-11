@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Academic Sanctuary — Secure Examination Portal</title>
+  <meta name="description" content="The world's most secure and intelligent AI-powered academic examination environment. Trusted by leading institutions." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="css/globals.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <style>
+    /* ─── PAGE BODY ─────────────────────────────────────── */
+    body { background: var(--bg); overflow-x: hidden; }
+
+    /* ─── TOPBAR ─────────────────────────────────────────── */
+    .landing-topbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: var(--z-top);
+      height: 60px;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 var(--space-8);
+      background: rgba(244,243,239,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-light);
+    }
+    .topbar-logo {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 15px; font-weight: 700; color: var(--primary);
+    }
+    .topbar-logo .shield-icon {
+      width: 32px; height: 32px;
+      background: var(--primary);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; color: #fff;
+    }
+    .topbar-links {
+      display: flex; align-items: center; gap: var(--space-6);
+    }
+    .topbar-link {
+      font-size: 14px; font-weight: 500;
+      color: var(--text-secondary);
+      transition: color 0.2s;
+    }
+    .topbar-link:hover { color: var(--primary); }
+    .topbar-right { display: flex; align-items: center; gap: var(--space-3); }
+    .protocol-badge {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 12px; font-weight: 500; color: var(--text-muted);
+    }
+    .protocol-badge .lock { font-size: 14px; }
+
+    /* ─── HERO ───────────────────────────────────────────── */
+    .hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 100px var(--space-8) var(--space-16);
+      text-align: center;
+    }
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.12em;
+      color: var(--accent); background: var(--accent-soft);
+      padding: 6px 16px; border-radius: var(--radius-full);
+      margin-bottom: var(--space-6);
+      animation: fadeIn 0.6s var(--ease) both;
+    }
+    .hero-title {
+      font-size: clamp(40px, 6vw, 72px);
+      font-weight: 900;
+      color: var(--primary);
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      max-width: 700px;
+      margin: 0 auto var(--space-5);
+      animation: fadeInUp 0.7s var(--ease) 0.1s both;
+    }
+    .hero-sub {
+      font-size: 18px; font-weight: 400;
+      color: var(--text-secondary);
+      max-width: 500px; margin: 0 auto var(--space-12);
+      line-height: 1.7;
+      animation: fadeInUp 0.7s var(--ease) 0.2s both;
+    }
+
+    /* ─── ROLE CARDS ─────────────────────────────────────── */
+    .role-cards-grid {
+      display: grid;
+      grid-template-columns: 2fr 1.2fr;
+      gap: var(--space-5);
+      max-width: 900px;
+      width: 100%;
+      margin: 0 auto var(--space-12);
+      animation: fadeInUp 0.8s var(--ease) 0.3s both;
+    }
+    .role-card {
+      background: var(--surface);
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--border-light);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      transition: var(--transition);
+      text-align: left;
+    }
+    .role-card:hover {
+      box-shadow: var(--shadow-lg);
+      transform: translateY(-4px);
+      border-color: var(--border);
+    }
+    .role-card-body { padding: var(--space-8); }
+    .role-icon {
+      width: 52px; height: 52px;
+      background: var(--accent-soft);
+      border-radius: var(--radius-md);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px; margin-bottom: var(--space-5);
+    }
+    .role-icon.admin-icon { background: var(--primary-soft); }
+    .role-title {
+      font-size: 26px; font-weight: 800; color: var(--primary);
+      margin-bottom: var(--space-3);
+    }
+    .role-title.admin-title { font-size: 22px; }
+    .role-desc {
+      font-size: 14px; color: var(--text-secondary);
+      line-height: 1.7; margin-bottom: var(--space-6);
+    }
+    .role-card-image {
+      position: relative; overflow: hidden;
+      background: linear-gradient(135deg, var(--accent-soft) 0%, var(--primary-soft) 100%);
+    }
+    .role-card-image img { width: 100%; height: 200px; object-fit: cover; opacity: 0.85; }
+    .role-card-image-placeholder {
+      height: 200px;
+      background: linear-gradient(135deg, #E8EAF6, #C5CAE9);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 60px; opacity: 0.3;
+    }
+    /* Admin card specific */
+    .role-card.admin-card .role-card-body {
+      padding: var(--space-6);
+      display: flex; flex-direction: column;
+      height: 100%;
+    }
+    .role-card.admin-card { display: flex; flex-direction: column; justify-content: space-between; }
+
+    /* ─── TRUST STRIP ────────────────────────────────────── */
+    .trust-strip {
+      display: flex; align-items: center; justify-content: center;
+      gap: var(--space-10);
+      padding: var(--space-5) 0;
+      border-top: 1px solid var(--border-light);
+      border-bottom: 1px solid var(--border-light);
+      max-width: 800px; margin: 0 auto;
+      animation: fadeIn 1s var(--ease) 0.5s both;
+    }
+    .trust-name {
+      font-size: 11px; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--text-faint);
+    }
+
+    /* ─── FOOTER ─────────────────────────────────────────── */
+    .landing-footer {
+      text-align: center;
+      padding: var(--space-6) var(--space-8);
+      border-top: 1px solid var(--border-light);
+    }
+    .footer-logo { font-size: 14px; font-weight: 700; color: var(--primary); margin-bottom: var(--space-3); }
+    .footer-copy  { font-size: 12px; color: var(--text-muted); margin-bottom: var(--space-4); }
+    .footer-links { display: flex; justify-content: center; gap: var(--space-5); flex-wrap: wrap; }
+    .footer-link {
+      font-size: 12px; color: var(--text-muted);
+      transition: color 0.2s;
+      cursor: pointer;
+    }
+    .footer-link:hover { color: var(--primary); }
+
+    /* ─── FLOATING SECURITY BADGE ───────────────────────── */
+    .security-ribbon {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      background: var(--primary);
+      color: #fff; border-radius: var(--radius-full);
+      padding: 10px 24px;
+      font-size: 12px; font-weight: 600;
+      display: flex; align-items: center; gap: 10px;
+      box-shadow: var(--shadow-lg);
+      animation: fadeInUp 0.8s var(--ease) 0.6s both;
+      white-space: nowrap;
+    }
+    .security-ribbon .dot { width: 8px; height: 8px; background: var(--teal); border-radius: 50%; animation: pulseDot 1.5s infinite; }
+  </style>
+</head>
+<body>
+
+<!-- ─── TOPBAR ──────────────────────────────────────────── -->
+<header class="landing-topbar" id="main-header">
+  <div class="topbar-logo">
+    <div class="shield-icon">🛡️</div>
+    The Academic Sanctuary
+  </div>
+  <nav class="topbar-links">
+    <a href="#" class="topbar-link">Help Center</a>
+    <a href="#" class="topbar-link">Security</a>
+  </nav>
+  <div class="topbar-right">
+    <div class="protocol-badge">
+      <span class="lock">🔒</span>
+      Institutional Security Protocol v4.2
+    </div>
+    <div class="protocol-badge" style="margin-left: 8px;">🌐</div>
+  </div>
+</header>
+
+<!-- ─── MAIN HERO ────────────────────────────────────────── -->
+<main class="hero" id="hero">
+  <div class="hero-eyebrow">
+    <span>✦</span>
+    Next-Generation Academic Assessment
+  </div>
+  <h1 class="hero-title">Choose Your Gateway</h1>
+  <p class="hero-sub">
+    Welcome back to the world's most secure and serene academic assessment environment.
+  </p>
+
+  <!-- ROLE CARDS -->
+  <div class="role-cards-grid" id="role-cards">
+
+    <!-- Student Card -->
+    <div class="role-card" id="student-card">
+      <div class="role-card-image-placeholder" style="background: linear-gradient(135deg, #E8EAF6 0%, #C5CAE9 100%);">
+        <span style="font-size: 80px; opacity: 0.18;">🎓</span>
+      </div>
+      <div class="role-card-body">
+        <div class="role-icon">🎓</div>
+        <h2 class="role-title">Student Portal</h2>
+        <p class="role-desc">
+          Access your examination dashboard, take pending assessments, and view 
+          your detailed performance analytics in a calm, focused environment.
+        </p>
+        <a href="login.html?role=student" class="btn btn-primary btn-lg w-full" id="enter-student-btn" style="justify-content: center;">
+          Enter Student Portal
+        </a>
+      </div>
+    </div>
+
+    <!-- Admin Card -->
+    <div class="role-card admin-card" id="admin-card">
+      <div class="role-card-body" style="flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-4);">
+            <div class="role-icon admin-icon">🛡️</div>
+            <span class="badge badge-muted">RESTRICTED</span>
+          </div>
+          <h2 class="role-title admin-title">Examiner Console</h2>
+          <p class="role-desc" style="font-size: 13px;">
+            Design assessments, manage question banks, and monitor live proctored sessions.
+          </p>
+        </div>
+        <a href="login.html?role=admin" class="btn btn-ghost w-full" id="enter-admin-btn" style="justify-content: center; margin-top: var(--space-4);">
+          Enter Console
+        </a>
+      </div>
+    </div>
+
+  </div><!-- / role-cards-grid -->
+
+  <!-- TRUST STRIP -->
+  <div class="trust-strip">
+    <span class="trust-name">Oxford Academic</span>
+    <span class="trust-name">Global Scholars</span>
+    <span class="trust-name">EduTech Alliance</span>
+    <span class="trust-name">Ivy Standard</span>
+  </div>
+</main>
+
+<!-- ─── FOOTER ──────────────────────────────────────────── -->
+<footer class="landing-footer">
+  <div class="footer-logo">The Academic Sanctuary</div>
+  <p class="footer-copy">© 2025 The Academic Sanctuary. All Rights Reserved.</p>
+  <nav class="footer-links">
+    <a class="footer-link">Privacy Policy</a>
+    <a class="footer-link">Terms of Service</a>
+    <a class="footer-link">GDPR Compliance</a>
+    <a class="footer-link">System Status</a>
+  </nav>
+</footer>
+
+<!-- ─── SECURITY RIBBON ──────────────────────────────────── -->
+<div class="security-ribbon">
+  <span class="dot"></span>
+  All connections secured via AES-256 GCM encryption
+</div>
+
+<!-- ─── TOAST CONTAINER ──────────────────────────────────── -->
+<div id="toast-container"></div>
+
+<script>
+  // Hover parallax on role cards
+  document.querySelectorAll('.role-card').forEach(card => {
+    card.addEventListener('mousemove', (e) => {
+      const rect = card.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width - 0.5;
+      const y = (e.clientY - rect.top) / rect.height - 0.5;
+      card.style.transform = `translateY(-4px) rotateX(${-y * 4}deg) rotateY(${x * 4}deg)`;
+      card.style.transition = 'transform 0.1s ease';
+    });
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = '';
+      card.style.transition = 'transform 0.4s ease';
+    });
+  });
+
+  // Toast helper
+  function showToast(msg, type = '') {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    const icons = { success: '✓', warning: '⚠', danger: '✕' };
+    toast.innerHTML = `<span class="toast-icon">${icons[type] || 'ℹ'}</span><span>${msg}</span>`;
+    container.appendChild(toast);
+    setTimeout(() => { toast.classList.add('toast-exit'); setTimeout(() => toast.remove(), 300); }, 3500);
+  }
+
+  // Welcome animation
+  window.addEventListener('load', () => {
+    setTimeout(() => showToast('Welcome to Academic Sanctuary', 'success'), 800);
+  });
+</script>
+</body>
+</html>

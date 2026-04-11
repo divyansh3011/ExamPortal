@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cheating Incidents — Academic Sanctuary</title>
+  <link rel="stylesheet" href="../css/globals.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <style>
+    body { background: var(--bg); display: flex; min-height: 100vh; }
+    .sidebar { width: 240px; flex-shrink: 0; background: var(--primary); color: #fff; display: flex; flex-direction: column; min-height: 100vh; position: fixed; top: 0; left: 0; bottom: 0; }
+    .sb-brand { padding: var(--space-6); border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .sb-brand-name { font-size: 15px; font-weight: 700; color: #fff; }
+    .sb-brand-sub  { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 2px; }
+    .sb-nav { flex: 1; padding: var(--space-4) var(--space-3); }
+    .sb-item { display: flex; align-items: center; gap: var(--space-3); padding: 10px var(--space-3); border-radius: var(--radius); color: rgba(255,255,255,0.65); font-size: 13px; font-weight: 500; cursor: pointer; transition: var(--transition-fast); text-decoration: none; margin-bottom: 2px; }
+    .sb-item:hover  { background: rgba(255,255,255,0.1); color: #fff; }
+    .sb-item.active { background: rgba(255,255,255,0.15); color: #fff; font-weight: 600; }
+    .sb-item .icon  { width: 20px; text-align: center; }
+
+    .main { margin-left: 240px; flex: 1; }
+    .topnav { height: 60px; background: var(--surface); border-bottom: 1px solid var(--border-light); display: flex; align-items: center; justify-content: space-between; padding: 0 var(--space-8); position: sticky; top: 0; z-index: 10; }
+    .page-content { padding: var(--space-8); }
+
+    /* ─── SUMMARY STRIP ─── */
+    .summary-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-4); margin-bottom: var(--space-8); }
+    .ss-card { background: var(--surface); border-radius: var(--radius-lg); padding: var(--space-5); border: 1px solid var(--border-light); display: flex; align-items: center; gap: var(--space-4); box-shadow: var(--shadow-xs); }
+    .ss-icon { width: 44px; height: 44px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+    .ss-val { font-size: 28px; font-weight: 900; color: var(--primary); line-height: 1; }
+    .ss-lbl { font-size: 12px; color: var(--text-muted); margin-top: 4px; font-weight: 500; }
+
+    /* ─── MAIN LAYOUT ─── */
+    .incidents-layout { display: grid; grid-template-columns: 1fr 340px; gap: var(--space-6); }
+
+    /* ─── FILTERS ─── */
+    .filter-row { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-5); flex-wrap: wrap; }
+    .filter-btn { padding: 7px 16px; border-radius: var(--radius-full); font-size: 13px; font-weight: 500; cursor: pointer; transition: var(--transition-fast); border: 1.5px solid var(--border); background: var(--surface); color: var(--text-muted); }
+    .filter-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .filter-search { flex: 1; max-width: 280px; padding: 8px 14px; border: 1.5px solid var(--border); border-radius: var(--radius-full); font-size: 13px; color: var(--text); background: var(--surface); }
+    .filter-search:focus { outline: none; border-color: var(--accent); }
+
+    /* ─── INCIDENT TABLE ─── */
+    .incidents-table { background: var(--surface); border-radius: var(--radius-xl); border: 1px solid var(--border-light); box-shadow: var(--shadow-sm); overflow: hidden; }
+    .it-header { display: grid; grid-template-columns: 180px 1fr 120px 100px 90px 80px; gap: var(--space-4); padding: var(--space-3) var(--space-5); border-bottom: 1px solid var(--border); background: var(--bg-alt); }
+    .it-col { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
+    .incident-row { display: grid; grid-template-columns: 180px 1fr 120px 100px 90px 80px; gap: var(--space-4); padding: var(--space-4) var(--space-5); border-bottom: 1px solid var(--border-light); align-items: center; transition: var(--transition-fast); cursor: pointer; }
+    .incident-row:hover { background: var(--bg); }
+    .incident-row:last-child { border-bottom: none; }
+    .ir-student { display: flex; align-items: center; gap: var(--space-2); }
+    .ir-avatar { width: 32px; height: 32px; border-radius: 50%; font-size: 12px; font-weight: 700; color: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .ir-name { font-size: 13px; font-weight: 600; color: var(--primary); }
+    .ir-roll { font-size: 11px; color: var(--text-muted); }
+    .ir-exam  { font-size: 13px; color: var(--text-secondary); }
+    .ir-type  { }
+    .ir-time  { font-size: 12px; color: var(--text-muted); }
+    .ir-sev   { }
+    .ir-action { }
+
+    /* ─── DETAIL CARDS ─── */
+    .detail-cards { display: flex; flex-direction: column; gap: var(--space-5); }
+    .detail-card-header { font-size: 15px; font-weight: 700; color: var(--primary); margin-bottom: var(--space-4); }
+
+    /* Snapshot grid */
+    .snapshot-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+    .snapshot-item { border-radius: var(--radius-md); overflow: hidden; background: var(--dark-bg); aspect-ratio: 4/3; display: flex; align-items: center; justify-content: center; font-size: 32px; color: var(--dark-muted); position: relative; border: 1px solid var(--border-light); }
+    .snapshot-time { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.7); color: rgba(255,255,255,0.8); font-size: 10px; font-family: var(--font-mono); padding: 3px 6px; }
+
+    /* Timeline */
+    .timeline { position: relative; padding-left: var(--space-6); }
+    .timeline::before { content: ''; position: absolute; left: 10px; top: 0; bottom: 0; width: 2px; background: var(--border); }
+    .tl-item { position: relative; margin-bottom: var(--space-4); }
+    .tl-item::before { content: ''; position: absolute; left: -26px; top: 5px; width: 12px; height: 12px; border-radius: 50%; background: var(--border); border: 2px solid var(--surface); }
+    .tl-item.danger::before  { background: var(--danger); }
+    .tl-item.warning::before { background: var(--warning); }
+    .tl-item.info::before    { background: var(--accent); }
+    .tl-title { font-size: 13px; font-weight: 600; color: var(--primary); }
+    .tl-time  { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .tl-desc  { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+
+    /* Pagination */
+    .pagination { display: flex; align-items: center; justify-content: space-between; padding: var(--space-4) var(--space-5); border-top: 1px solid var(--border-light); }
+    .pg-info { font-size: 13px; color: var(--text-muted); }
+    .pg-buttons { display: flex; gap: var(--space-2); }
+    .pg-btn { width: 32px; height: 32px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--text-muted); display: flex; align-items: center; justify-content: center; transition: var(--transition-fast); }
+    .pg-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .pg-btn:hover  { border-color: var(--accent); color: var(--accent); }
+  </style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sb-brand"><div class="sb-brand-name">🛡️ Examiner Console</div><div class="sb-brand-sub">Academic Sanctuary v4.2</div></div>
+  <nav class="sb-nav">
+    <a class="sb-item" href="dashboard.html"><span class="icon">⊞</span> Dashboard</a>
+    <a class="sb-item" href="create-exam.html"><span class="icon">✏️</span> Create Exam</a>
+    <a class="sb-item" href="monitor.html"><span class="icon">🔍</span> Live Monitor</a>
+    <a class="sb-item active" href="incidents.html"><span class="icon">⚠️</span> Incidents</a>
+    <a class="sb-item" href="#"><span class="icon">📊</span> Reports</a>
+    <a class="sb-item" href="#"><span class="icon">📚</span> Question Bank</a>
+  </nav>
+</aside>
+
+<div class="main">
+  <nav class="topnav">
+    <span style="font-size:18px; font-weight:700; color: var(--primary);">Cheating Incident Records</span>
+    <div style="display:flex; gap:var(--space-3);">
+      <button class="btn btn-ghost btn-sm" onclick="exportCSV()">⬇ Export CSV</button>
+      <button class="btn btn-danger btn-sm" onclick="flagAll()">🚨 Flag All Unreviewed</button>
+    </div>
+  </nav>
+
+  <div class="page-content animate-fadeIn">
+
+    <!-- SUMMARY -->
+    <div class="summary-strip">
+      <div class="ss-card">
+        <div class="ss-icon" style="background: var(--danger-soft);">🔄</div>
+        <div><div class="ss-val" style="color:var(--danger);">8</div><div class="ss-lbl">Tab Switches</div></div>
+      </div>
+      <div class="ss-card">
+        <div class="ss-icon" style="background: var(--warning-soft);">👁️</div>
+        <div><div class="ss-val" style="color:var(--warning);">14</div><div class="ss-lbl">Gaze Away Events</div></div>
+      </div>
+      <div class="ss-card">
+        <div class="ss-icon" style="background: var(--accent-soft);">🌐</div>
+        <div><div class="ss-val">2</div><div class="ss-lbl">IP Changes</div></div>
+      </div>
+      <div class="ss-card">
+        <div class="ss-icon" style="background: var(--success-soft);">✓</div>
+        <div><div class="ss-val" style="color:var(--success);">3</div><div class="ss-lbl">Reviewed</div></div>
+      </div>
+    </div>
+
+    <div class="incidents-layout">
+      <!-- TABLE -->
+      <div>
+        <div class="filter-row">
+          <button class="filter-btn active" onclick="setFilter('all',this)">All Incidents</button>
+          <button class="filter-btn" onclick="setFilter('tab_switch',this)">Tab Switch</button>
+          <button class="filter-btn" onclick="setFilter('gaze_away',this)">Gaze Away</button>
+          <button class="filter-btn" onclick="setFilter('ip_change',this)">IP Change</button>
+          <button class="filter-btn" onclick="setFilter('unreviewed',this)">Unreviewed</button>
+          <input class="filter-search" type="text" placeholder="🔍 Search student..." oninput="searchIncidents(this.value)" />
+        </div>
+
+        <div class="incidents-table">
+          <div class="it-header">
+            <div class="it-col">Student</div>
+            <div class="it-col">Exam</div>
+            <div class="it-col">Incident Type</div>
+            <div class="it-col">Time</div>
+            <div class="it-col">Severity</div>
+            <div class="it-col">Action</div>
+          </div>
+          <div id="incident-rows"></div>
+          <div class="pagination">
+            <div class="pg-info" id="pg-info">Showing 1-10 of 24 incidents</div>
+            <div class="pg-buttons">
+              <div class="pg-btn active">1</div>
+              <div class="pg-btn">2</div>
+              <div class="pg-btn">3</div>
+              <div class="pg-btn">›</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DETAIL CARDS -->
+      <div class="detail-cards">
+        <!-- Webcam snapshots -->
+        <div class="card">
+          <div class="card-body">
+            <div class="detail-card-header">📸 Webcam Snapshots</div>
+            <div class="snapshot-grid">
+              <div class="snapshot-item">👤<div class="snapshot-time">14:32:18</div></div>
+              <div class="snapshot-item" style="border-color:var(--danger);">⚠️<div class="snapshot-time" style="background:rgba(239,68,68,0.8);">14:35:42 — FLAG</div></div>
+              <div class="snapshot-item">👤<div class="snapshot-time">14:38:55</div></div>
+              <div class="snapshot-item">👤<div class="snapshot-time">14:42:10</div></div>
+            </div>
+            <button class="btn btn-ghost w-full" style="margin-top:var(--space-4); justify-content:center;" onclick="showToast('Loading full snapshot gallery...','')">View All Snapshots</button>
+          </div>
+        </div>
+
+        <!-- Incident timeline -->
+        <div class="card">
+          <div class="card-body">
+            <div class="detail-card-header">📋 Recent Activity Timeline</div>
+            <div class="timeline" id="timeline"></div>
+          </div>
+        </div>
+
+        <!-- Quick actions -->
+        <div class="card">
+          <div class="card-body">
+            <div class="detail-card-header">⚡ Quick Actions</div>
+            <div style="display:flex; flex-direction:column; gap: var(--space-3);">
+              <button class="btn btn-ghost w-full" style="justify-content:center;" onclick="sendEmailHOD()">📧 Email Report to HOD</button>
+              <button class="btn btn-ghost w-full" style="justify-content:center;" onclick="disqualifyStudent()">🚫 Disqualify Student</button>
+              <button class="btn btn-primary w-full" style="justify-content:center;" onclick="downloadReport()">⬇ Download Full Report</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+const COLORS = ['#1E2A5E','#4A5FBF','#10B981','#F59E0B','#EF4444','#8B5CF6'];
+const INCIDENTS = [
+  { student: 'Alexander Chen', roll: 'STU-88294', exam: 'Neural Architecture Foundations', type: 'tab_switch', severity: 'high', time: '14:35:42', reviewed: false },
+  { student: 'Priya Sharma',   roll: 'STU-74531', exam: 'Neural Architecture Foundations', type: 'gaze_away', severity: 'medium', time: '14:28:10', reviewed: false },
+  { student: 'Chen Wei',       roll: 'STU-22910', exam: 'Neural Architecture Foundations', type: 'ip_change', severity: 'high', time: '14:20:05', reviewed: false },
+  { student: 'Sofia Martinez', roll: 'STU-65432', exam: 'Cloud Architecture Practical',    type: 'gaze_away', severity: 'low',  time: '13:55:22', reviewed: true },
+  { student: 'James Kim',      roll: 'STU-33291', exam: 'Neural Architecture Foundations', type: 'tab_switch', severity: 'medium', time: '14:42:18', reviewed: false },
+  { student: 'Ananya Patel',   roll: 'STU-77110', exam: 'Cloud Architecture Practical',    type: 'gaze_away', severity: 'low',  time: '13:40:11', reviewed: true },
+  { student: 'Ravi Singh',     roll: 'STU-88109', exam: 'Neural Architecture Foundations', type: 'tab_switch', severity: 'high', time: '14:50:33', reviewed: false },
+  { student: 'Liu Yang',       roll: 'STU-44820', exam: 'Neural Architecture Foundations', type: 'gaze_away', severity: 'medium', time: '14:15:45', reviewed: false },
+  { student: 'Carlos Rivera',  roll: 'STU-29944', exam: 'Cloud Architecture Practical',    type: 'ip_change', severity: 'high', time: '14:02:19', reviewed: true },
+  { student: 'Mei Tanaka',     roll: 'STU-55673', exam: 'Neural Architecture Foundations', type: 'gaze_away', severity: 'low',  time: '14:38:07', reviewed: false },
+];
+
+const TYPE_LABELS = {
+  tab_switch: { label: '🔄 Tab Switch', badge: 'badge-danger' },
+  gaze_away:  { label: '👁️ Gaze Away', badge: 'badge-warning' },
+  ip_change:  { label: '🌐 IP Change', badge: 'badge-primary' },
+};
+const SEV_LABELS = {
+  high:   '<span class="badge badge-danger">HIGH</span>',
+  medium: '<span class="badge badge-warning">MED</span>',
+  low:    '<span class="badge badge-muted">LOW</span>',
+};
+
+let displayedIncidents = [...INCIDENTS];
+
+function renderIncidents() {
+  const rows = document.getElementById('incident-rows');
+  rows.innerHTML = displayedIncidents.map((inc, i) => {
+    const typeInfo = TYPE_LABELS[inc.type];
+    return `
+    <div class="incident-row" onclick="selectIncident(${INCIDENTS.indexOf(inc)})">
+      <div class="ir-student">
+        <div class="ir-avatar" style="background:${COLORS[i % COLORS.length]}">${inc.student[0]}</div>
+        <div><div class="ir-name">${inc.student}</div><div class="ir-roll">${inc.roll}</div></div>
+      </div>
+      <div class="ir-exam">${inc.exam}</div>
+      <div class="ir-type"><span class="badge ${typeInfo.badge}">${typeInfo.label}</span></div>
+      <div class="ir-time">${inc.time}</div>
+      <div class="ir-sev">${SEV_LABELS[inc.severity]}</div>
+      <div class="ir-action">
+        ${inc.reviewed
+          ? `<span class="badge badge-success">✓ Done</span>`
+          : `<button class="btn btn-sm btn-ghost" onclick="event.stopPropagation(); reviewIncident(${INCIDENTS.indexOf(inc)})">Review</button>`}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function setFilter(type, el) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  displayedIncidents = type === 'all' ? [...INCIDENTS]
+    : type === 'unreviewed' ? INCIDENTS.filter(i => !i.reviewed)
+    : INCIDENTS.filter(i => i.type === type);
+  renderIncidents();
+}
+
+function searchIncidents(q) {
+  displayedIncidents = INCIDENTS.filter(i => i.student.toLowerCase().includes(q.toLowerCase()) || i.roll.includes(q));
+  renderIncidents();
+}
+
+function reviewIncident(idx) {
+  INCIDENTS[idx].reviewed = true;
+  renderIncidents();
+  showToast('✓ Incident reviewed', 'success');
+}
+
+function selectIncident(idx) {
+  const inc = INCIDENTS[idx];
+  showToast(`Viewing: ${inc.student} — ${TYPE_LABELS[inc.type].label}`, '');
+}
+
+function sendEmailHOD() { showToast('📧 Incident report emailed to HOD', 'success'); }
+function disqualifyStudent() { showToast('🚫 Student disqualified and notified', 'danger'); }
+function downloadReport()    { showToast('⬇ Downloading full incident report...', 'success'); }
+function flagAll()           { INCIDENTS.filter(i => !i.reviewed).forEach(i => i.severity = 'high'); renderIncidents(); showToast('🚨 All unreviewed incidents flagged HIGH', 'danger'); }
+function exportCSV()         { showToast('⬇ Exporting incidents as CSV...', 'success'); }
+
+// Build timeline
+document.getElementById('timeline').innerHTML = [
+  { type: 'danger',  title: 'STU-88294 — 3rd tab switch (auto-submit triggered)', time: '14:50:33', desc: 'Neural Architecture Foundations' },
+  { type: 'danger',  title: 'STU-22910 — IP address changed', time: '14:20:05', desc: '203.x.x.x → 185.x.x.x (Possible VPN)' },
+  { type: 'warning', title: 'STU-74531 — Gaze away detected', time: '14:28:10', desc: 'Face left camera frame for 12 seconds' },
+  { type: 'warning', title: 'STU-44820 — Gaze tracking lost', time: '14:15:45', desc: 'Poor lighting conditions detected' },
+  { type: 'info',    title: 'STU-65432 reviewed and cleared', time: '13:55:22', desc: 'Reviewed by Prof. Singh' },
+].map(e => `
+  <div class="tl-item ${e.type}">
+    <div class="tl-title">${e.title}</div>
+    <div class="tl-time">${e.time}</div>
+    <div class="tl-desc">${e.desc}</div>
+  </div>`).join('');
+
+function showToast(msg, type='') {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = `toast toast-${type}`;
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+
+renderIncidents();
+</script>
+</body>
+</html>
